@@ -888,12 +888,10 @@ function renderImpacts(){
 
 function renderLocation(){
   const regs=REGENCIES[state.province]||[];
-  const regencyField=regs.length
-    ?`<select data-field="regency">${regs.map(x=>`<option ${state.regency===x?"selected":""}>${x}</option>`).join("")}</select>`
-    :`<input type="text" data-field="regency" value="${esc(state.regency)}" placeholder="Ketik nama kabupaten/kota" autocomplete="address-level2">`;
+  const regencyField=`<select data-field="regency" ${regs.length?"":"disabled"}>${regs.length?regs.map(x=>`<option ${state.regency===x?"selected":""}>${x}</option>`).join(""):'<option>Data wilayah tidak tersedia</option>'}</select>`;
   return heading(3,"Tentukan tapak dan kewenangan","Lokasi memicu overlay tata ruang, kawasan sensitif, pembagian kewenangan, serta regulasi provinsi dan kabupaten/kota.")+
   `<div class="map"><span class="island one"></span><span class="island two"></span><span class="island three"></span><span class="pin">●</span><div class="mapbox"><b>Polygon belum diunggah</b><small>GeoJSON atau KML · simulasi prototipe</small><button class="primary" data-action="upload-polygon">Unggah polygon</button></div></div>
-  <div class="form-row"><label class="form-field">Provinsi<select data-field="province">${PROVINCES.map(x=>`<option ${state.province===x?"selected":""}>${x}</option>`).join("")}</select><small>38 provinsi Indonesia tersedia</small></label><label class="form-field">Kabupaten / kota${regencyField}<small>${regs.length?`${regs.length} wilayah tersedia di provinsi ini`:"Ketik sesuai alamat tapak atau polygon"}</small></label></div>
+  <div class="form-row"><label class="form-field">Provinsi<select data-field="province">${PROVINCES.map(x=>`<option ${state.province===x?"selected":""}>${x}</option>`).join("")}</select><small>38 provinsi Indonesia tersedia</small></label><label class="form-field">Kabupaten / kota${regencyField}<small>${regs.length?`${regs.length} wilayah tersedia di provinsi ini`:"Periksa data provinsi"}</small></label></div>
   <div class="checks">${[["estate","Berada di kawasan industri"],["forest-cross","Beririsan kawasan hutan"],["marine-cross","Memakai ruang laut/pesisir"],["cross-admin","Lintas kabupaten/provinsi"],["protected","Dekat kawasan lindung/konservasi"],["river-buffer","Berada dekat sempadan sungai/danau"]].map(([key,label])=>`<label><input type="checkbox" data-location="${key}" ${state.locationFlags.includes(key)?"checked":""}> ${label}</label>`).join("")}</div>
   <div class="smart"><span>i</span><div><b>Lapisan daerah</b><p>${state.province==="Kalimantan Timur"?"Pilot regulasi daerah tersedia untuk Provinsi Kalimantan Timur, Kota Balikpapan, dan Kabupaten Kutai Kartanegara.":"Regulasi lokal daerah ini belum dipetakan di prototipe. Tracker akan menambahkan tugas verifikasi JDIH dan PTSP setempat."} Daftar 514 kabupaten/kota mengikuti Kepmendagri 300.2.2-2430 Tahun 2025.</p>${officialLink(LINKS.wilayahRef,"Buka sumber wilayah")}</div></div>`;
 }
