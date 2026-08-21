@@ -225,7 +225,7 @@ function getPtsp(){
   if(state.regency==="Kota Balikpapan")return {name:"SPONTAN Balikpapan",url:LINKS.ptspBalikpapan};
   if(state.regency==="Kabupaten Kutai Kartanegara")return {name:"DPMPTSP Kukar",url:LINKS.ptspKukar};
   if(state.province==="Kalimantan Timur")return {name:"E-PTSP Kaltim",url:LINKS.ptspKaltim};
-  return {name:`PTSP ${state.province}`,url:LINKS.oss};
+  return {name:"OSS / PTSP sesuai kewenangan",url:LINKS.oss};
 }
 
 function buildTasks(){
