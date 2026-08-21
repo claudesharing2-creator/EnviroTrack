@@ -116,7 +116,17 @@ const IMPACT_GROUPS = [
   {key:"other",name:"Dampak lain",icon:"◎",desc:"Fisik, hayati, sosial, dan iklim",items:[["noise","Kebisingan"],["vibration","Getaran"],["odor","Bau"],["traffic","Lalu lintas"],["biodiversity","Keanekaragaman hayati"],["social","Masyarakat/sosial"],["ghg","Gas rumah kaca"],["land-clearing","Pembukaan lahan"],["dredging","Pengerukan/reklamasi"]]}
 ];
 
-const PROVINCES = ["Kalimantan Timur","Riau","Sumatera Selatan","Jawa Barat","Jawa Tengah","Jawa Timur","Banten","DKI Jakarta","Bali","Sulawesi Tengah","Sulawesi Selatan","Maluku","Papua"];
+// Cakupan provinsi mengikuti 38 wilayah administrasi tingkat I Indonesia.
+// Urutan dikelompokkan per kawasan agar daftar panjang tetap mudah dipindai.
+const PROVINCES = [
+  "Aceh","Sumatera Utara","Sumatera Barat","Riau","Jambi","Sumatera Selatan","Bengkulu","Lampung","Kepulauan Bangka Belitung","Kepulauan Riau",
+  "DKI Jakarta","Jawa Barat","Jawa Tengah","DI Yogyakarta","Jawa Timur","Banten",
+  "Bali","Nusa Tenggara Barat","Nusa Tenggara Timur",
+  "Kalimantan Barat","Kalimantan Tengah","Kalimantan Selatan","Kalimantan Timur","Kalimantan Utara",
+  "Sulawesi Utara","Sulawesi Tengah","Sulawesi Selatan","Sulawesi Tenggara","Gorontalo","Sulawesi Barat",
+  "Maluku","Maluku Utara",
+  "Papua Barat","Papua Barat Daya","Papua","Papua Selatan","Papua Tengah","Papua Pegunungan"
+];
 const REGENCIES = {
   "Kalimantan Timur":["Kabupaten Kutai Kartanegara","Kota Balikpapan","Kabupaten Penajam Paser Utara","Kota Samarinda","Kabupaten Kutai Timur"],
   "Riau":["Kota Pekanbaru","Kabupaten Siak","Kabupaten Bengkalis"],
@@ -145,6 +155,11 @@ function loadState(){
     const merged={...DEFAULT_STATE,...saved,answers:{...DEFAULT_STATE.answers,...(saved.answers||{})}};
     if(!saved.capacityUnit){const match=String(saved.capacity||"").match(/([\d.,]+)\s*(.*)/);if(match){merged.capacity=match[1];merged.capacityUnit=match[2]||profileForCode(saved.kblis?.[0]?.code).units[0];}}
     if(!Array.isArray(merged.wasteCodes))merged.wasteCodes=[];
+    if(!PROVINCES.includes(merged.province)){merged.province=DEFAULT_STATE.province;merged.regency=DEFAULT_STATE.regency;}
+    const provinceRegencies=REGENCIES[merged.province];
+    const knownOtherRegency=Object.entries(REGENCIES).some(([province,items])=>province!==merged.province&&items.includes(merged.regency));
+    if(provinceRegencies&&!provinceRegencies.includes(merged.regency))merged.regency=provinceRegencies[0];
+    if(!provinceRegencies&&knownOtherRegency)merged.regency="";
     return merged;
   }
   catch{return {...DEFAULT_STATE};}
@@ -206,7 +221,12 @@ function sectorWasteKeys(){
 function impactCount(group){return group.items.filter(([key])=>state.impacts.includes(key)).length;}
 function hasGroup(key){const g=IMPACT_GROUPS.find(x=>x.key===key);return g&&g.items.some(([id])=>state.impacts.includes(id));}
 function officialLink(url,label,className="inline-link"){return `<a class="${className}" href="${url}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`;}
-function getPtsp(){if(state.regency==="Kota Balikpapan")return {name:"SPONTAN Balikpapan",url:LINKS.ptspBalikpapan};if(state.regency==="Kabupaten Kutai Kartanegara")return {name:"DPMPTSP Kukar",url:LINKS.ptspKukar};return {name:"E-PTSP Kaltim",url:LINKS.ptspKaltim};}
+function getPtsp(){
+  if(state.regency==="Kota Balikpapan")return {name:"SPONTAN Balikpapan",url:LINKS.ptspBalikpapan};
+  if(state.regency==="Kabupaten Kutai Kartanegara")return {name:"DPMPTSP Kukar",url:LINKS.ptspKukar};
+  if(state.province==="Kalimantan Timur")return {name:"E-PTSP Kaltim",url:LINKS.ptspKaltim};
+  return {name:`PTSP ${state.province}`,url:LINKS.oss};
+}
 
 function buildTasks(){
   const ptsp=getPtsp();
@@ -280,10 +300,13 @@ function renderImpacts(){
 }
 
 function renderLocation(){
-  const regs=REGENCIES[state.province]||["Pilih kabupaten/kota di PTSP setempat"];
+  const regs=REGENCIES[state.province]||[];
+  const regencyField=regs.length
+    ?`<select data-field="regency">${regs.map(x=>`<option ${state.regency===x?"selected":""}>${x}</option>`).join("")}</select>`
+    :`<input type="text" data-field="regency" value="${esc(state.regency)}" placeholder="Ketik nama kabupaten/kota" autocomplete="address-level2">`;
   return heading(3,"Tentukan tapak dan kewenangan","Lokasi memicu overlay tata ruang, kawasan sensitif, pembagian kewenangan, serta regulasi provinsi dan kabupaten/kota.")+
   `<div class="map"><span class="island one"></span><span class="island two"></span><span class="island three"></span><span class="pin">●</span><div class="mapbox"><b>Polygon belum diunggah</b><small>GeoJSON atau KML · simulasi prototipe</small><button class="primary" data-action="upload-polygon">Unggah polygon</button></div></div>
-  <div class="form-row"><label class="form-field">Provinsi<select data-field="province">${PROVINCES.map(x=>`<option ${state.province===x?"selected":""}>${x}</option>`).join("")}</select></label><label class="form-field">Kabupaten / kota<select data-field="regency">${regs.map(x=>`<option ${state.regency===x?"selected":""}>${x}</option>`).join("")}</select></label></div>
+  <div class="form-row"><label class="form-field">Provinsi<select data-field="province">${PROVINCES.map(x=>`<option ${state.province===x?"selected":""}>${x}</option>`).join("")}</select><small>38 provinsi Indonesia tersedia</small></label><label class="form-field">Kabupaten / kota${regencyField}<small>${regs.length?"Pilih wilayah tapak":"Ketik sesuai alamat tapak atau polygon"}</small></label></div>
   <div class="checks">${[["estate","Berada di kawasan industri"],["forest-cross","Beririsan kawasan hutan"],["marine-cross","Memakai ruang laut/pesisir"],["cross-admin","Lintas kabupaten/provinsi"],["protected","Dekat kawasan lindung/konservasi"],["river-buffer","Berada dekat sempadan sungai/danau"]].map(([key,label])=>`<label><input type="checkbox" data-location="${key}" ${state.locationFlags.includes(key)?"checked":""}> ${label}</label>`).join("")}</div>
   <div class="smart"><span>i</span><div><b>Lapisan daerah</b><p>${state.province==="Kalimantan Timur"?"Pilot regulasi daerah tersedia untuk Provinsi Kalimantan Timur, Kota Balikpapan, dan Kabupaten Kutai Kartanegara.":"Regulasi lokal daerah ini belum dipetakan di prototipe. Tracker akan menambahkan tugas verifikasi JDIH dan PTSP setempat."}</p></div></div>`;
 }
@@ -436,7 +459,7 @@ function setKbli(data){
 }
 function updateField(el){
   const key=el.dataset.field;if(!key)return;state[key]=el.value;
-  if(key==="province"){const first=(REGENCIES[state.province]||[])[0];if(first)state.regency=first;}
+  if(key==="province")state.regency=(REGENCIES[state.province]||[])[0]||"";
   saveState();renderView();
 }
 
