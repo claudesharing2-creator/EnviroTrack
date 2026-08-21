@@ -724,12 +724,12 @@ const REGENCIES = {
 };
 
 const DEFAULT_DOCUMENTS=[
-  {id:"doc-nib",name:"NIB-2026.pdf",category:"Legalitas",status:"Terverifikasi",date:"12 Agu 2026",taskIds:["nib"]},
-  {id:"doc-polygon",name:"Polygon-tapak.geojson",category:"Lokasi",status:"Perlu review",date:"14 Agu 2026",taskIds:["spatial","location-overlay"]},
-  {id:"doc-water",name:"Neraca-air-v2.xlsx",category:"Air limbah",status:"Draf",date:"18 Agu 2026",taskIds:["ww-map","ww-pertek"]},
-  {id:"doc-tps",name:"Layout-TPS-LB3.pdf",category:"Limbah B3",status:"Draf",date:"18 Agu 2026",taskIds:["b3-storage"]},
-  {id:"doc-emission",name:"Hasil-uji-emisi.pdf",category:"Emisi",status:"Kadaluarsa 30 hari",date:"02 Agu 2026",taskIds:["air-pertek","air-report"]},
-  {id:"doc-rkl",name:"Matriks-RKL-RPL.xlsx",category:"AMDAL",status:"Belum lengkap",date:"19 Agu 2026",taskIds:["screen","other-impact","report"]}
+  {id:"doc-nib",name:"NIB-2026.pdf",category:"Legalitas",status:"Terverifikasi",date:"12 Agu 2026",projectName:"Proyek Migas Kaltim",taskIds:["nib"]},
+  {id:"doc-polygon",name:"Polygon-tapak.geojson",category:"Lokasi",status:"Perlu review",date:"14 Agu 2026",projectName:"Proyek Migas Kaltim",taskIds:["spatial","location-overlay"]},
+  {id:"doc-water",name:"Neraca-air-v2.xlsx",category:"Air limbah",status:"Draf",date:"18 Agu 2026",projectName:"Proyek Migas Kaltim",taskIds:["ww-map","ww-pertek"]},
+  {id:"doc-tps",name:"Layout-TPS-LB3.pdf",category:"Limbah B3",status:"Draf",date:"18 Agu 2026",projectName:"Proyek Migas Kaltim",taskIds:["b3-storage"]},
+  {id:"doc-emission",name:"Hasil-uji-emisi.pdf",category:"Emisi",status:"Kadaluarsa 30 hari",date:"02 Agu 2026",projectName:"Proyek Migas Kaltim",taskIds:["air-pertek","air-report"]},
+  {id:"doc-rkl",name:"Matriks-RKL-RPL.xlsx",category:"AMDAL",status:"Belum lengkap",date:"19 Agu 2026",projectName:"Proyek Migas Kaltim",taskIds:["screen","other-impact","report"]}
 ];
 
 const DEFAULT_STATE = {
@@ -741,7 +741,7 @@ const DEFAULT_STATE = {
   answers:{fieldType:"Onshore",injection:"Belum ditentukan"},wasteCodes:["b105d","b110d"],showAllImpacts:false,
   legalPurpose:"business",legalOwners:"",legalUmk:"",
   province:"Kalimantan Timur",regency:"Kabupaten Kutai Kartanegara",locationFlags:[],openTask:0,
-  taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),regFilter:"Semua",regSearch:"",docFilter:"Semua"
+  taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",docFilter:"Semua"
 };
 
 let state = loadState();
@@ -763,6 +763,7 @@ function loadState(){
     if(!merged.taskProgress||typeof merged.taskProgress!=="object"||Array.isArray(merged.taskProgress))merged.taskProgress={};
     if(!Array.isArray(saved.documents))merged.documents=DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]}));
     if(!Array.isArray(merged.documents))merged.documents=[];
+    merged.documents=merged.documents.map(d=>({...d,projectName:d.projectName||saved.projectName||DEFAULT_STATE.projectName,taskIds:Array.isArray(d.taskIds)?d.taskIds:[]}));
     if(!PROVINCES.includes(merged.province)){merged.province=DEFAULT_STATE.province;merged.regency=DEFAULT_STATE.regency;}
     const provinceRegencies=REGENCIES[merged.province];
     const knownOtherRegency=Object.entries(REGENCIES).some(([province,items])=>province!==merged.province&&items.includes(merged.regency));
@@ -974,7 +975,7 @@ const TASK_GUIDES={
 };
 function guideForTask(task){return TASK_GUIDES[task.id]||{portalWhen:"Siapkan bukti dan prasyarat di bawah sebelum membuka portal tujuan.",steps:[`Konfirmasi ruang lingkup tugas: ${task.title}.`,`Kumpulkan bukti yang dibutuhkan: ${task.evidence}.`,"Buka sistem tujuan, ikuti permintaan data, dan catat nomor tiket/pengajuan.","Simpan hasil serta tautkan dokumen final ke tugas ini."]};}
 function progressForTask(id){const value=state.taskProgress?.[id];return value&&typeof value==="object"?{status:value.status||"not_started",done:Array.isArray(value.done)?value.done:[]}:{status:"not_started",done:[]};}
-function documentsForTask(id){return (state.documents||[]).filter(d=>(d.taskIds||[]).includes(id));}
+function documentsForTask(id){return (state.documents||[]).filter(d=>(d.projectName||state.projectName)===state.projectName&&(d.taskIds||[]).includes(id));}
 function taskWorkflowStrip(){return `<div class="workflow-strip" aria-label="Alur penyelesaian tugas"><div><span>1</span><b>Mulai tugas</b><small>Status menjadi sedang dikerjakan</small></div><div><span>2</span><b>Ikuti langkah</b><small>Kerjakan checklist dari atas</small></div><div><span>3</span><b>Tautkan bukti</b><small>Masukkan dokumen ke tugas</small></div><div><span>4</span><b>Tugas selesai</b><small>Langkah dan bukti sudah lengkap</small></div></div>`;}
 
 const AHU_ROUTES={
@@ -1048,12 +1049,19 @@ function renderAllTasks(){
   return `<div class="view-shell">${viewHeader("Checklist tugas",`${all.length} tugas berisi langkah kerja, waktu membuka portal, dan dokumen bukti yang saling tertaut.`,'<button class="ghost" data-action="export-checklist">Ekspor checklist</button>')}${taskWorkflowStrip()}<div class="view-card"><div class="toolbar"><div class="filter-chips">${[["all","Semua"],["in-progress","Sedang dikerjakan"],["completed","Selesai"],["ready","Belum dimulai"],["blocked","Menunggu"],["later","Pra-operasi"]].map(([k,l])=>`<button class="filter-chip ${state.taskFilter===k?"active":""}" data-task-filter="${k}">${l}</button>`).join("")}</div><span class="helper">${shown.length} tugas ditampilkan</span></div>${shown.length?taskRows(shown):'<div class="empty-note"><b>Belum ada tugas pada status ini</b><p>Mulai tugas dari daftar Semua, lalu statusnya akan diperbarui otomatis.</p></div>'}</div></div>`;
 }
 
+function documentProjectNames(){return [...new Set([state.projectName,...demoProjects.map(p=>p.name),...(state.documents||[]).map(d=>d.projectName)].filter(Boolean))];}
 function renderDocuments(){
-  const allTasks=buildTasks(),focusTask=state.documentTask?allTasks.find(x=>x.id===state.documentTask):null,allDocs=state.documents||[],scope=focusTask?allDocs.filter(d=>(d.taskIds||[]).includes(focusTask.id)):allDocs;
-  const cats=["Semua",...new Set(scope.map(x=>x.category))],docs=state.docFilter==="Semua"?scope:scope.filter(x=>x.category===state.docFilter);
+  const allTasks=buildTasks(),focusTask=state.documentTask?allTasks.find(x=>x.id===state.documentTask):null,allDocs=state.documents||[],projectNames=documentProjectNames();
+  const selectedProject=focusTask?state.projectName:(projectNames.includes(state.docProject)?state.docProject:state.projectName);
+  const projectDocs=allDocs.filter(d=>(d.projectName||state.projectName)===selectedProject),scope=focusTask?projectDocs.filter(d=>(d.taskIds||[]).includes(focusTask.id)):projectDocs;
+  const cats=["Semua",...new Set(scope.map(x=>x.category))],selectedCategory=cats.includes(state.docFilter)?state.docFilter:"Semua",query=String(state.docSearch||"").trim().toLowerCase();
+  const docs=scope.filter(d=>(selectedCategory==="Semua"||d.category===selectedCategory)&&(!query||`${d.name} ${d.category} ${d.status}`.toLowerCase().includes(query)));
+  const verified=projectDocs.filter(d=>d.status==="Terverifikasi").length,needsReview=projectDocs.filter(d=>d.status!=="Terverifikasi").length,linkedTasks=new Set(projectDocs.flatMap(d=>d.taskIds||[])).size;
   const actions=`<input class="hide" id="doc-file-input" type="file" multiple><button class="primary" data-action="upload-doc">+ ${focusTask?"Tambah bukti tugas":"Tambah dokumen"}</button>`;
-  const taskContext=focusTask?`<section class="doc-task-context"><div><span class="kicker">SEDANG MENYIAPKAN BUKTI UNTUK</span><h3>${esc(focusTask.title)}</h3><p><b>Yang harus dibuktikan:</b> ${esc(focusTask.evidence)}</p><small>File yang dipilih dari sini otomatis ditautkan ke tugas ini. Setelah kembali ke tracker, jumlah dokumen akan langsung berubah. Prototipe saat ini menyimpan nama file dan hubungan tugas di perangkat; penyimpanan berkas penuh memerlukan backend.</small></div><button class="ghost" data-action="back-to-task" data-id="${focusTask.id}">← Kembali ke tugas</button></section>`:"";
-  return `<div class="view-shell">${viewHeader(focusTask?"Bukti tugas":"Dokumen",focusTask?"Dokumen di bawah hanya yang tertaut pada tugas aktif.":"Setiap dokumen dapat ditautkan ke satu atau beberapa tugas sehingga bukti dan progres tidak terpisah.",actions)}${taskContext}<div class="view-card"><div class="toolbar"><div class="filter-chips">${cats.map(x=>`<button class="filter-chip ${state.docFilter===x?"active":""}" data-doc-filter="${esc(x)}">${esc(x)}</button>`).join("")}</div>${focusTask?`<button class="soft" data-action="show-all-docs">Lihat semua dokumen</button>`:""}</div>${docs.length?`<div class="doc-grid">${docs.map(d=>{const linked=(d.taskIds||[]).map(id=>allTasks.find(x=>x.id===id)).filter(Boolean);return `<article class="doc-card"><span class="doc-icon">${esc(d.name.split(".").pop().toUpperCase())}</span><span class="doc-copy"><b>${esc(d.name)}</b><small>${esc(d.category)} · ${esc(d.date)}</small><span class="status ${d.status==="Terverifikasi"?"verified":d.status.includes("Kadaluarsa")?"blocked":"reviewing"}">${esc(d.status)}</span><span class="doc-links-label">TERTAUT KE ${linked.length} TUGAS</span><span class="doc-task-tags">${linked.map(t=>`<button data-action="open-linked-task" data-id="${t.id}">${esc(t.title)}</button>`).join("")||"<small>Belum ditautkan ke tugas</small>"}</span></span><button class="icon-button" data-action="doc-menu" data-id="${d.id}" aria-label="Menu dokumen">•••</button></article>`;}).join("")}</div>`:`<div class="empty-note"><b>Belum ada bukti untuk tugas ini</b><p>Klik “Tambah bukti tugas”, pilih file, lalu file akan otomatis muncul di sini dan di detail tugas.</p><button class="primary" data-action="upload-doc">+ Tambah bukti tugas</button></div>`}</div></div>`;
+  const taskContext=focusTask?`<section class="doc-task-context"><div><span class="kicker">BUKTI UNTUK TUGAS AKTIF</span><h3>${esc(focusTask.title)}</h3><p><b>Yang harus dibuktikan:</b> ${esc(focusTask.evidence)}</p><small>Dokumen yang dipilih akan masuk ke proyek ${esc(state.projectName)} dan langsung ditautkan ke tugas ini.</small></div><button class="ghost" data-action="back-to-task" data-id="${focusTask.id}">← Kembali ke tugas</button></section>`:"";
+  const projectBar=!focusTask?`<section class="doc-project-bar"><div><span class="doc-folder">□</span><div><small>RUANG DOKUMEN PROYEK</small><b>${esc(selectedProject)}</b><p>Dokumen proyek lain tidak dicampur dalam daftar ini.</p></div></div><label><span>Ganti proyek</span><select data-field="docProject">${projectNames.map(name=>`<option value="${esc(name)}" ${selectedProject===name?"selected":""}>${esc(name)}</option>`).join("")}</select></label></section>`:"";
+  const storage=`<section class="storage-banner"><span class="storage-icon">CLD</span><div><small>PENYIMPANAN SAAT INI</small><b>Mode prototipe — metadata lokal di perangkat</b><p>Nama file, status, proyek, dan hubungan tugas disimpan di browser. Isi berkas belum diunggah ke cloud.</p></div><span class="storage-state">BELUM CLOUD</span><details><summary>Rencana produksi</summary><p>Gunakan private object storage untuk file, database untuk metadata dan versi, serta login dan aturan akses per perusahaan/proyek. Jangan menyimpan dokumen izin di repository GitHub publik.</p></details></section>`;
+  return `<div class="view-shell">${viewHeader(focusTask?"Bukti tugas":"Dokumen proyek",focusTask?"Selesaikan tugas dengan menautkan bukti yang tepat.":"Setiap proyek memiliki ruang dokumen sendiri; di dalamnya dokumen ditautkan kembali ke tugas yang membutuhkan.",actions)}${taskContext}${projectBar}${storage}<section class="doc-summary"><div><small>TOTAL DOKUMEN</small><b>${projectDocs.length}</b><span>${esc(selectedProject)}</span></div><div><small>TERVERIFIKASI</small><b>${verified}</b><span>Siap digunakan</span></div><div><small>PERLU TINDAKAN</small><b>${needsReview}</b><span>Draf, review, atau kedaluwarsa</span></div><div><small>TUGAS TERTAUT</small><b>${linkedTasks}</b><span>Bukti tidak berdiri sendiri</span></div></section><div class="view-card doc-workspace"><div class="doc-toolbar"><div class="filter-chips">${cats.map(x=>`<button class="filter-chip ${selectedCategory===x?"active":""}" data-doc-filter="${esc(x)}">${esc(x)}</button>`).join("")}</div><div class="doc-toolbar-actions"><label class="doc-search"><span>⌕</span><input id="doc-search" value="${esc(state.docSearch||"")}" placeholder="Cari dokumen"></label>${focusTask?`<button class="soft" data-action="show-all-docs">Semua dokumen proyek</button>`:""}</div></div>${docs.length?`<div class="doc-grid">${docs.map(d=>{const linked=(d.taskIds||[]).map(id=>allTasks.find(x=>x.id===id)).filter(Boolean),ext=d.name.includes(".")?d.name.split(".").pop().toUpperCase():"FILE";return `<article class="doc-card"><div class="doc-card-head"><span class="doc-icon">${esc(ext)}</span><span class="doc-copy"><b>${esc(d.name)}</b><small>${esc(d.category)} · ${esc(d.date)}</small></span><button class="icon-button" data-action="doc-menu" data-id="${d.id}" aria-label="Menu dokumen">•••</button></div><div class="doc-card-meta"><span class="status ${d.status==="Terverifikasi"?"verified":d.status.includes("Kadaluarsa")?"blocked":"reviewing"}">${esc(d.status)}</span><small>${esc(d.projectName||selectedProject)}</small></div><div class="doc-linked"><span class="doc-links-label">DIGUNAKAN OLEH ${linked.length} TUGAS</span><span class="doc-task-tags">${linked.map(t=>`<button data-action="open-linked-task" data-id="${t.id}">${esc(t.title)}</button>`).join("")||"<small>Belum ditautkan—buka tugas lalu pilih Kelola bukti.</small>"}</span></div></article>`;}).join("")}</div>`:`<div class="empty-note"><b>${query?"Dokumen tidak ditemukan":focusTask?"Belum ada bukti untuk tugas ini":"Belum ada dokumen pada proyek ini"}</b><p>${query?"Coba kata kunci atau kategori lain.":focusTask?"Tambahkan bukti dari sini agar otomatis terhubung dengan tugas.":"Dokumen yang ditambahkan akan tersimpan di ruang proyek ini dan dapat ditautkan ke tugas."}</p><button class="primary" data-action="upload-doc">+ ${focusTask?"Tambah bukti tugas":"Tambah dokumen"}</button></div>`}</div></div>`;
 }
 
 function renderCalendar(){
@@ -1211,6 +1219,7 @@ function updateField(el){
 document.addEventListener("input",e=>{
   if(e.target.id==="kbli-search"){clearTimeout(searchTimer);searchTimer=setTimeout(()=>searchKbli(e.target.value),350);}
   if(e.target.id==="reg-search"){state.regSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
+  if(e.target.id==="doc-search"){state.docSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
   if(e.target.matches("[data-field][type='text'],[data-field]:not(select)")){state[e.target.dataset.field]=e.target.value;saveState();}
   if(e.target.matches("input[data-answer]")){state.answers[e.target.dataset.answer]=e.target.value;saveState();}
 });
@@ -1226,11 +1235,13 @@ document.addEventListener("change",e=>{
     const task=state.documentTask?buildTasks().find(x=>x.id===state.documentTask):null;
     const category=task?(task.cat.includes("Limbah B3")?"Limbah B3":task.cat.includes("Air limbah")?"Air limbah":task.cat.includes("Emisi")?"Emisi":task.cat.includes("Lokasi")||task.cat.includes("Prasyarat")?"Lokasi":task.cat.includes("AMDAL")||task.cat.includes("Persetujuan")?"AMDAL":"Legalitas"):"Lainnya";
     const date=new Intl.DateTimeFormat("id-ID",{day:"2-digit",month:"short",year:"numeric"}).format(new Date());
-    const additions=files.map((file,i)=>({id:`doc-${Date.now()}-${i}`,name:file.name,category,status:"Draf",date,taskIds:task?[task.id]:[]}));
+    const projectName=task?state.projectName:(documentProjectNames().includes(state.docProject)?state.docProject:state.projectName);
+    const additions=files.map((file,i)=>({id:`doc-${Date.now()}-${i}`,name:file.name,category,status:"Draf",date,projectName,taskIds:task?[task.id]:[]}));
     state.documents=[...(state.documents||[]),...additions];state.docFilter="Semua";
     if(task){const progress=progressForTask(task.id),total=guideForTask(task).steps.length;if(progress.done.length===total)state.taskProgress[task.id]={status:"completed",done:progress.done};}
     saveState();renderView();showToast(`${files.length} dokumen ditambahkan${task?" dan ditautkan ke tugas":""}.`);return;
   }
+  if(e.target.matches("select[data-field='docProject']")){state.docProject=e.target.value;state.docFilter="Semua";state.docSearch="";saveState();renderView();return;}
   if(e.target.matches("select[data-field]"))updateField(e.target);
   if(e.target.matches("select[data-answer]")){const id=e.target.dataset.answer;state.answers[id]=e.target.value;applyAnswerTriggers(id,e.target.value);saveState();renderView();}
   if(e.target.matches("[data-impact]")){const k=e.target.dataset.impact;state.impacts=e.target.checked?[...new Set([...state.impacts,k])]:state.impacts.filter(x=>x!==k);saveState();renderView();}
@@ -1257,11 +1268,11 @@ document.addEventListener("click",e=>{
   if(a==="start-task"){
     const id=action.dataset.id,current=progressForTask(id);state.taskProgress[id]={status:"in_progress",done:current.done};state.openTask=id;saveState();renderView();showToast("Tugas dimulai. Ikuti dan centang langkah dari atas ke bawah.");
   }
-  if(a==="manage-evidence"){state.documentTask=action.dataset.id;state.docFilter="Semua";state.view="documents";renderView();}
+  if(a==="manage-evidence"){state.documentTask=action.dataset.id;state.docProject=state.projectName;state.docFilter="Semua";state.docSearch="";state.view="documents";renderView();}
   if(a==="back-to-task"||a==="open-linked-task"){state.openTask=action.dataset.id;state.documentTask=null;state.view="tasks";renderView();}
-  if(a==="show-all-docs"){state.documentTask=null;state.docFilter="Semua";renderView();}
+  if(a==="show-all-docs"){state.documentTask=null;state.docProject=state.projectName;state.docFilter="Semua";state.docSearch="";renderView();}
   if(a==="new-project"){state.view="screening";state.step=0;renderView();}
-  if(a==="open-project"){const p=demoProjects[+action.dataset.index];state.projectName=p.name;state.view="screening";state.step=4;renderView();}
+  if(a==="open-project"){const p=demoProjects[+action.dataset.index];state.projectName=p.name;state.docProject=p.name;state.view="screening";state.step=4;renderView();}
   if(a==="upload-doc")document.getElementById("doc-file-input")?.click();
   if(a==="doc-menu")showToast("Aksi dokumen: pratinjau, ganti versi, tautkan ke tugas, atau arsipkan.");
   if(a==="add-event")showToast("Form agenda akan menyimpan tenggat dan pengingat pada versi backend.");
