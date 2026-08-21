@@ -193,6 +193,45 @@ a{color:inherit}
 .task-detail small{font-size:6px;color:#788780;font-weight:900;letter-spacing:.6px}
 .task-detail p{font-size:7px;line-height:1.5;color:#5f7068;margin:3px 0}
 .task-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ahu-assistant{margin-top:14px;border:1px solid #9ebcad;border-radius:12px;background:#eef6f2;padding:14px}
+.ahu-title{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.ahu-title>div{display:grid;gap:3px}
+.ahu-title h3{font:18px Georgia;margin:0;color:#183f33}
+.ahu-title p{font-size:8px;max-width:650px;margin:2px 0;color:#5d7268}
+.ahu-title>span{width:39px;height:39px;border-radius:10px;background:#1f6952;color:#fff;display:grid;place-items:center;font-size:9px;font-weight:900;letter-spacing:.8px}
+.ahu-questions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.ahu-questions label{display:grid;align-content:start;gap:5px;border:1px solid #d4e0da;background:#fff;border-radius:9px;padding:10px}
+.ahu-questions b{font-size:8px}
+.ahu-questions select{width:100%;min-width:0;border:1px solid #cfd8d2;border-radius:7px;background:#fff;padding:8px;font-size:8px;color:#264b3e}
+.ahu-questions small{font-size:6px;line-height:1.4;color:#78867f}
+.ahu-empty{margin-top:9px;border:1px dashed #9fb8ac;border-radius:9px;background:#f9fcfa;padding:13px;text-align:center}
+.ahu-empty b{font-size:9px}
+.ahu-empty p{font-size:7px;margin:3px 0}
+.ahu-result{margin-top:10px;border:1px solid #4b8a70;border-radius:10px;background:#fff;padding:13px}
+.ahu-result>p{font-size:8px;line-height:1.55;color:#4d6359;margin:9px 0}
+.ahu-result-head{display:grid;grid-template-columns:43px 1fr;gap:10px;align-items:center}
+.ahu-result-head>span{width:42px;height:42px;border-radius:10px;background:#dcece4;color:#2c6f56;display:grid;place-items:center;font-size:7px;font-weight:900}
+.ahu-result-head>div{display:grid;gap:2px}
+.ahu-result-head h4{font:18px Georgia;margin:0;color:#193f33}
+.ahu-result-head b{font-size:8px;color:#2f775c}
+.ahu-route-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 0}
+.ahu-route-grid>div{border-radius:8px;background:#edf5f1;padding:9px;display:grid;gap:3px}
+.ahu-route-grid b{font-size:8px;line-height:1.4}
+.ahu-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ahu-detail-grid>div{border:1px solid #e0e4e0;border-radius:8px;padding:10px}
+.ahu-detail-grid ol{margin:6px 0 0;padding-left:16px;display:grid;gap:4px}
+.ahu-detail-grid li{font-size:7px;line-height:1.45;color:#50645b;padding-left:2px}
+.ahu-after{margin-top:8px;border-left:3px solid #d49a5e;background:#fff7eb;border-radius:0 8px 8px 0;padding:9px 10px}
+.ahu-after p{margin:3px 0 0;font-size:7px;line-height:1.5;color:#6d5c4b}
+.ahu-result-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:9px}
+.ahu-result-actions a{border-radius:6px;background:#226b53;color:#fff;padding:8px 10px;text-decoration:none;font-size:7px;font-weight:800}
+.ahu-result-actions a.secondary{border:1px solid #b6d0c3;background:#fff;color:#276b53}
+.ahu-other{margin-top:10px;border-top:1px solid #cddbd4;padding-top:9px}
+.ahu-other summary{font-size:8px;font-weight:900;color:#2a674f;cursor:pointer}
+.ahu-icon-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.ahu-icon-grid p{border:1px solid #d9e1dc;border-radius:8px;background:#fff;padding:9px;margin:0;display:grid;gap:3px}
+.ahu-icon-grid b{font-size:8px}
+.ahu-icon-grid span{font-size:7px;line-height:1.45;color:#677870}
 .task-guide{margin-top:14px;border:1px solid #d9dfda;border-radius:10px;background:#fff;padding:14px}
 .guide-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .guide-head>div{display:grid;gap:3px}
@@ -392,6 +431,13 @@ to{opacity:1;transform:none}
 .owner{display:none}
 .task-detail{padding:13px 13px 15px}
 .task-summary-grid{grid-template-columns:1fr;gap:10px}
+.ahu-assistant{padding:11px}
+.ahu-title h3{font-size:16px}
+.ahu-questions,.ahu-route-grid,.ahu-detail-grid,.ahu-icon-grid{grid-template-columns:1fr}
+.ahu-result-head{grid-template-columns:37px 1fr}
+.ahu-result-head>span{width:36px;height:36px}
+.ahu-result-head h4{font-size:16px}
+.ahu-result-actions{align-items:stretch;flex-direction:column}
 .task-guide{padding:11px}
 .task-guide label{grid-template-columns:17px 23px 1fr;padding:8px 7px}
 .task-evidence{align-items:stretch;flex-direction:column}
