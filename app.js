@@ -1016,7 +1016,8 @@ function renderProjects(){return `<div class="view-shell">${viewHeader("Proyek s
 
 function renderAllTasks(){
   const all=buildTasks();let shown=all;
-  if(state.taskFilter==="in-progress"||state.taskFilter==="completed")shown=all.filter(x=>progressForTask(x.id).status===state.taskFilter.replace("-","_"));
+  if(state.taskFilter==="in-progress")shown=all.filter(x=>["in_progress","evidence_needed"].includes(progressForTask(x.id).status));
+  else if(state.taskFilter==="completed")shown=all.filter(x=>progressForTask(x.id).status==="completed");
   else if(state.taskFilter!=="all")shown=all.filter(x=>x.status===state.taskFilter&&progressForTask(x.id).status==="not_started");
   return `<div class="view-shell">${viewHeader("Checklist tugas",`${all.length} tugas berisi langkah kerja, waktu membuka portal, dan dokumen bukti yang saling tertaut.`,'<button class="ghost" data-action="export-checklist">Ekspor checklist</button>')}${taskWorkflowStrip()}<div class="view-card"><div class="toolbar"><div class="filter-chips">${[["all","Semua"],["in-progress","Sedang dikerjakan"],["completed","Selesai"],["ready","Belum dimulai"],["blocked","Menunggu"],["later","Pra-operasi"]].map(([k,l])=>`<button class="filter-chip ${state.taskFilter===k?"active":""}" data-task-filter="${k}">${l}</button>`).join("")}</div><span class="helper">${shown.length} tugas ditampilkan</span></div>${shown.length?taskRows(shown):'<div class="empty-note"><b>Belum ada tugas pada status ini</b><p>Mulai tugas dari daftar Semua, lalu statusnya akan diperbarui otomatis.</p></div>'}</div></div>`;
 }
