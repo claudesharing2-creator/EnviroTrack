@@ -266,7 +266,7 @@ function renderRegulations(){
 function renderView(){
   const screening=state.view==="screening";
   document.getElementById("stepbar").classList.toggle("hide",!screening);
-  document.getElementById("panel-footer").classList.toggle("hide",!screening);
+  document.getElementById("panel-footer")?.classList.toggle("hide",!screening);
   const titles={screening:["PENAPISAN PROYEK",state.step===4?"Tracker proyek":"Proyek baru"],projects:["PORTOFOLIO","Proyek saya"],tasks:["PELAKSANAAN","Checklist tugas"],documents:["EVIDENCE VAULT","Dokumen"],calendar:["JADWAL KEPATUHAN","Kalender"],regulations:["KNOWLEDGE BASE","Basis regulasi"]};
   document.getElementById("page-eyebrow").textContent=titles[state.view][0];document.getElementById("page-title").textContent=titles[state.view][1];
   document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===state.view&&b.closest(".nav")));
