@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 180" role="img" aria-label="Lanskap hijau abstrak">
+  <rect width="420" height="180" fill="#b7c8b9"/>
+  <path d="M0 116C66 78 120 88 176 105c65 20 102 14 157-10 35-15 62-16 87-5v90H0Z" fill="#466d56"/>
+  <path d="M0 137c54-18 99-20 153-5 68 19 110 14 164-8 42-17 71-13 103 2v54H0Z" fill="#1f4d3b"/>
+  <path d="M0 82c64-31 123-26 181 1 48 23 90 24 134 1 40-21 72-22 105-8" fill="none" stroke="#eef1e8" stroke-width="5" opacity=".75"/>
+</svg>
