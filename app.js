@@ -1173,7 +1173,7 @@ function renderHome(){
   const references=SYSTEM_REFERENCES.map(item=>`<article class="reference-card"><p>${esc(item.stage)}</p><h4>${esc(item.name)}</h4><span>${esc(item.use)}</span><a href="${item.url}" ${item.url.startsWith("http")?'target="_blank" rel="noopener noreferrer"':`data-view="screening" data-step="2"`}>Buka sistem</a></article>`).join("");
   return `<div class="landing">
     <section class="landing-hero">
-      <div class="hero-copy motion-reveal"><h2>Dari perusahaan baru menuju <span class="hero-inline-image" role="img" aria-label="Lanskap hijau"></span> operasi yang patuh lingkungan.</h2><p>EnviroTrack mengubah KBLI, skala, proses, lokasi, dan sumber dampak menjadi jalur izin, langkah kerja, serta bukti yang perlu disimpan.</p><div class="hero-actions"><button class="primary hero-primary" data-view="screening" data-step="0">Mulai dari profil usaha</button><a class="text-link" href="#alur-izin">Pelajari alur umum</a></div></div>
+      <div class="hero-copy motion-reveal"><h2>Dari perusahaan baru <span class="hero-inline-image" role="img" aria-label="Lanskap hijau"></span> menuju operasi yang patuh lingkungan.</h2><p>EnviroTrack mengubah KBLI, skala, proses, lokasi, dan sumber dampak menjadi jalur izin, langkah kerja, serta bukti yang perlu disimpan.</p><div class="hero-actions"><button class="primary hero-primary" data-view="screening" data-step="0">Mulai dari profil usaha</button><a class="text-link" href="#alur-izin">Pelajari alur umum</a></div></div>
       <aside class="hero-sequence motion-reveal" aria-label="Urutan utama"><ol><li><span>01</span><div><b>Bentuk perusahaan</b><small>AHU, pajak, dan data pendiri</small></div></li><li><span>02</span><div><b>Daftarkan kegiatan</b><small>OSS, KBLI, lokasi, dan tingkat risiko</small></div></li><li><span>03</span><div><b>Penuhi persetujuan</b><small>Lingkungan, sektor, daerah, dan praoperasi</small></div></li><li><span>04</span><div><b>Jalankan kewajiban</b><small>Pemantauan, bukti, dan pelaporan</small></div></li></ol></aside>
     </section>
 
@@ -1199,7 +1199,7 @@ function initMotion(){
   window.gsap.fromTo(".landing-hero .motion-reveal",{opacity:0,y:22},{opacity:1,y:0,duration:.75,stagger:.12,ease:"power2.out"});
   window.gsap.fromTo(".hero-inline-image",{scale:.78,opacity:.45},{scale:1.08,opacity:1,ease:"none",scrollTrigger:{id:"enviro-hero-image",trigger:".landing-hero",start:"top top",end:"bottom top",scrub:true}});
   window.gsap.utils.toArray(".motion-reveal:not(.landing-hero .motion-reveal)").forEach((element,index)=>window.gsap.fromTo(element,{opacity:0,y:20},{opacity:1,y:0,duration:.65,ease:"power2.out",scrollTrigger:{id:`enviro-section-${index}`,trigger:element,start:"top 88%"}}));
-  window.gsap.utils.toArray(".reveal-copy span").forEach((element,index)=>window.gsap.fromTo(element,{opacity:.28},{opacity:1,ease:"none",scrollTrigger:{id:`enviro-copy-${index}`,trigger:element,start:"top 84%",end:"bottom 62%",scrub:true}}));
+  window.gsap.utils.toArray(".reveal-copy span").forEach((element,index)=>window.gsap.fromTo(element,{opacity:.55},{opacity:1,ease:"none",scrollTrigger:{id:`enviro-copy-${index}`,trigger:element,start:"top 84%",end:"bottom 62%",scrub:true}}));
 }
 
 function renderView(){
