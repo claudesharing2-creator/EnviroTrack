@@ -48,6 +48,64 @@ const PACKS = {
   services:{name:"Jasa lainnya",icon:"J",activities:["Operasional utama","Bangunan/fasilitas","Genset/utilitas","Pemakaian air","Air limbah domestik","Bahan kimia","Sampah & limbah","Mobilitas/parkir"]}
 };
 
+const PROFILE_COMMON = {
+  location:["forest","conservation","peat","karst","coastal","river","watershed","disaster","industrial-estate"],
+  social:["noise","traffic","biodiversity","social","ghg","land-clearing"]
+};
+const QUESTIONNAIRE_PROFILES = {
+  coconut:{name:"Pertanian kelapa",capacityLabel:"Luas areal yang dikelola",units:["ha","pohon produktif","ton kelapa/tahun"],placeholder:"Contoh: 250",activities:["Penyiapan/pembukaan lahan","Pembibitan kelapa","Penanaman & penyulaman","Pemupukan","Pengendalian hama/pestisida","Pemanenan","Pascapanen di kebun","Jalan, drainase & workshop"],questions:[{id:"landStatus",label:"Status lahan",type:"select",options:["APL","Kawasan hutan/pelepasan","Belum diketahui"]},{id:"chemicalUse",label:"Pupuk/pestisida kimia",type:"select",options:["Digunakan dan disimpan","Digunakan tanpa penyimpanan","Tidak digunakan"]},{id:"workshop",label:"Workshop/genset di lokasi",type:"select",options:["Ada","Tidak ada"]}],impacts:["domestic","runoff","usedoil","chemical","battery","storage","spill","packaging","organic","domestic-solid","groundwater","surface","municipal",...PROFILE_COMMON.location,...PROFILE_COMMON.social],defaults:["runoff","packaging","organic","biodiversity","land-clearing"],waste:["b104d","b105d","b107d","b110d","a102d","pesticide-verify"]},
+  oilpalm:{name:"Pertanian kelapa sawit",capacityLabel:"Luas kebun inti + plasma",units:["ha","ton TBS/tahun","pohon produktif"],placeholder:"Contoh: 5.000",activities:["Penyiapan/pembukaan lahan","Pembibitan kelapa sawit","Penanaman & penyulaman","Pemupukan","Pengendalian hama/pestisida","Pemanenan TBS","Pascapanen di kebun","Jalan, drainase & workshop"],questions:[{id:"landStatus",label:"Status lahan",type:"select",options:["APL","Kawasan hutan/pelepasan","Belum diketahui"]},{id:"peatUse",label:"Berada pada lahan gambut",type:"select",options:["Ya","Tidak","Belum diketahui"]},{id:"chemicalUse",label:"Pupuk/pestisida kimia",type:"select",options:["Digunakan dan disimpan","Digunakan tanpa penyimpanan","Tidak digunakan"]}],impacts:["domestic","runoff","usedoil","chemical","battery","storage","spill","packaging","organic","domestic-solid","groundwater","surface","municipal",...PROFILE_COMMON.location,...PROFILE_COMMON.social],defaults:["runoff","packaging","organic","biodiversity","land-clearing"],waste:["b104d","b105d","b107d","b110d","a102d","pesticide-verify"]},
+  plantation:{name:"Pertanian/perkebunan",capacityLabel:"Luas areal kegiatan",units:["ha","ton produk/tahun","batang/pohon"],placeholder:"Contoh: 1.200",activities:["Penyiapan/pembukaan lahan","Pembibitan","Penanaman","Pemupukan","Pengendalian hama/pestisida","Irigasi","Pemanenan","Pascapanen di kebun"],questions:[{id:"landStatus",label:"Status lahan",type:"select",options:["APL","Kawasan hutan/pelepasan","Belum diketahui"]},{id:"chemicalUse",label:"Pupuk/pestisida kimia",type:"select",options:["Digunakan dan disimpan","Digunakan tanpa penyimpanan","Tidak digunakan"]},{id:"irrigation",label:"Sumber irigasi",type:"select",options:["Tidak ada","Air permukaan","Air tanah","Pemasok/PDAM"]}],impacts:["domestic","runoff","usedoil","chemical","battery","storage","spill","packaging","organic","domestic-solid","groundwater","surface","municipal",...PROFILE_COMMON.location,...PROFILE_COMMON.social],defaults:["runoff","organic","biodiversity"],waste:["b104d","b105d","b107d","b110d","a102d","pesticide-verify"]},
+  migas:{name:"Pertambangan minyak dan gas",capacityLabel:"Kapasitas produksi desain",units:["BOPD","MMSCFD","BOEPD","sumur"],placeholder:"Contoh: 45.000",activities:["Survei/seismik","Eksplorasi/pengeboran","Konstruksi fasilitas","Produksi minyak/gas","Separasi & treatment","Pipa & gathering","Terminal/penyimpanan","Penutupan/pascaoperasi"],questions:[{id:"fieldType",label:"Tipe lapangan",type:"select",options:["Onshore","Offshore","Onshore dan offshore"]},{id:"wellCount",label:"Jumlah sumur",type:"number",placeholder:"Contoh: 24"},{id:"injection",label:"Injeksi produced water",type:"select",options:["Ya","Tidak","Belum ditentukan"]}],impacts:["domestic","process","produced","oily","cooling","blowdown","hydrotest","runoff","laboratory","boiler","genset","turbine","flare","vent","voc","fugitive","dust","usedoil","sludge","chemical","catalyst","battery","soil","storage","spill","residue","scrap","packaging","domestic-solid","groundwater","surface","seawater","municipal","reuse",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"odor","vibration","dredging"],defaults:["produced","oily","flare","fugitive","usedoil","sludge","storage","spill","ghg"],waste:["b104d","b105d","b107d","b109d","b110d","a102d","sector-verify"]},
+  mining:{name:"Pertambangan dan penggalian",capacityLabel:"Kapasitas produksi/penambangan",units:["ton/tahun","juta ton/tahun","BCM/tahun","ha"],placeholder:"Contoh: 2.500.000",activities:["Eksplorasi","Land clearing","Pengupasan tanah pucuk","Penggalian/penambangan","Pengangkutan","Crushing/screening","Stockpile","Reklamasi & pascatambang"],questions:[{id:"mineMethod",label:"Metode tambang",type:"select",options:["Terbuka","Bawah tanah","Quarry","Belum ditentukan"]},{id:"processing",label:"Pengolahan/pemurnian",type:"select",options:["Ada di tapak","Tidak ada"]},{id:"dewatering",label:"Mine dewatering",type:"select",options:["Ada","Tidak ada"]}],impacts:["domestic","process","runoff","laboratory","genset","kiln","dust","fugitive","usedoil","sludge","chemical","battery","soil","storage","spill","residue","ash","scrap","packaging","groundwater","surface",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"noise","vibration"],defaults:["runoff","dust","usedoil","storage","noise","land-clearing"],waste:["b104d","b105d","b107d","b109d","b110d","a102d","sector-verify"]},
+  manufacturing:{name:"Industri pengolahan",capacityLabel:"Kapasitas produk utama",units:["ton/tahun","ton/hari","unit/tahun","m³ produk/hari"],placeholder:"Contoh: 100.000",activities:["Penerimaan bahan baku","Proses basah","Proses termal","Pencampuran/reaksi","Finishing/coating","Pengemasan","Utilitas","IPAL & pengelolaan limbah"],questions:[{id:"wetProcess",label:"Proses menggunakan air",type:"select",options:["Ya","Tidak"]},{id:"thermalProcess",label:"Boiler/furnace/kiln",type:"select",options:["Ada","Tidak ada"]},{id:"chemicalUse",label:"B3/bahan kimia proses",type:"select",options:["Digunakan dan disimpan","Digunakan tanpa penyimpanan","Tidak digunakan"]}],impacts:["domestic","process","oily","cooling","blowdown","runoff","laboratory","boiler","genset","kiln","incinerator","vent","voc","fugitive","dust","usedoil","sludge","chemical","catalyst","battery","storage","spill","residue","ash","scrap","packaging","organic","domestic-solid","groundwater","surface","municipal","reuse",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"odor","vibration"],defaults:["process","boiler","usedoil","chemical","packaging","storage"],waste:["b104d","b105d","b107d","b109d","b110d","a102d","sector-verify"]},
+  energy:{name:"Energi dan pembangkitan",capacityLabel:"Kapasitas terpasang",units:["MW","MWe","MWp","MWh/tahun"],placeholder:"Contoh: 100",activities:["Pembangkit utama","Boiler/turbin","Genset darurat","Penyimpanan bahan bakar","Cooling system","Pengolahan air","Transmisi/distribusi","Abu/residu"],questions:[{id:"fuel",label:"Sumber energi/bahan bakar",type:"select",options:["Batubara","Gas","Minyak/BBM","Biomassa","Surya/angin/hidro"]},{id:"coolingSystem",label:"Sistem pendingin",type:"select",options:["Once-through","Cooling tower","Air cooled","Tidak ada"]},{id:"grid",label:"Terhubung jaringan",type:"select",options:["On-grid","Off-grid"]}],impacts:["domestic","process","oily","cooling","blowdown","runoff","boiler","genset","turbine","vent","fugitive","dust","usedoil","sludge","chemical","battery","storage","spill","residue","ash","scrap","groundwater","surface","seawater","municipal",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"noise","vibration"],defaults:["cooling","blowdown","turbine","usedoil","ghg"],waste:["b104d","b105d","b107d","b109d","b110d","a102d","sector-verify"]},
+  water:{name:"Air, air limbah dan persampahan",capacityLabel:"Kapasitas pengolahan desain",units:["m³/hari","liter/detik","ton/hari","jiwa terlayani"],placeholder:"Contoh: 5.000",activities:["Intake/pengumpulan","Pra-pengolahan","Pengolahan utama","Pengolahan lumpur","Disinfeksi","Jaringan/pemompaan","Penyimpanan residu","Pembuangan/pemanfaatan"],questions:[{id:"facilityType",label:"Jenis fasilitas",type:"select",options:["SPAM/air minum","IPAL/IPLT","Pengelolaan sampah","Daur ulang/pemulihan"]},{id:"sludge",label:"Menghasilkan lumpur",type:"select",options:["Ya","Tidak"]},{id:"discharge",label:"Tujuan keluaran",type:"select",options:["Badan air","Tanah/pemanfaatan","Pihak ketiga","Belum ditentukan"]}],impacts:["domestic","process","leachate","laboratory","genset","odor","usedoil","sludge","chemical","battery","storage","spill","residue","packaging","organic","domestic-solid","sewage-sludge","groundwater","surface","municipal","reuse",...PROFILE_COMMON.location,...PROFILE_COMMON.social],defaults:["process","sludge","odor","storage"],waste:["b104d","b105d","b107d","b110d","a102d","sector-verify"]},
+  construction:{name:"Konstruksi",capacityLabel:"Skala fisik utama",units:["ha tapak","m² luas bangunan","km","unit bangunan"],placeholder:"Contoh: 12",activities:["Pembersihan lahan","Pekerjaan tanah","Dewatering","Pondasi & struktur","Batching/asphalt plant","Basecamp","Mobilisasi material","Demobilisasi"],questions:[{id:"duration",label:"Durasi konstruksi",type:"select",options:["< 1 tahun","1–3 tahun","> 3 tahun"]},{id:"workers",label:"Pekerja puncak",type:"number",placeholder:"Contoh: 250"},{id:"batching",label:"Batching/asphalt plant",type:"select",options:["Ada","Tidak ada"]}],impacts:["domestic","oily","runoff","genset","dust","usedoil","chemical","battery","storage","spill","scrap","packaging","domestic-solid","construction-waste","groundwater","surface",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"noise","vibration"],defaults:["domestic","runoff","dust","noise","traffic","construction-waste"],waste:["b104d","b105d","b107d","b110d","a102d"]},
+  logistics:{name:"Transportasi dan logistik",capacityLabel:"Kapasitas layanan/throughput",units:["ton/tahun","TEU/tahun","kendaraan/hari","penumpang/hari"],placeholder:"Contoh: 250.000",activities:["Gudang/penyimpanan","Bongkar muat","Terminal kendaraan","Pelabuhan/jetty","Cold storage","Bengkel & pencucian","Pengisian bahan bakar","Fasilitas penunjang"],questions:[{id:"cargo",label:"Jenis muatan utama",type:"select",options:["Barang umum","B3/kimia","BBM/migas","Curah","Penumpang"]},{id:"workshop",label:"Bengkel/pencucian",type:"select",options:["Ada","Tidak ada"]},{id:"marine",label:"Fasilitas laut/jetty",type:"select",options:["Ada","Tidak ada"]}],impacts:["domestic","oily","runoff","genset","voc","fugitive","dust","usedoil","chemical","battery","storage","spill","scrap","packaging","domestic-solid","groundwater","surface","seawater",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"noise","dredging"],defaults:["domestic","traffic","usedoil","spill"],waste:["b104d","b105d","b107d","b110d","a102d","sector-verify"]},
+  forestry:{name:"Kehutanan",capacityLabel:"Luas areal/produksi hasil hutan",units:["ha","m³ kayu/tahun","ton hasil hutan/tahun"],placeholder:"Contoh: 10.000",activities:["Inventarisasi tegakan","Pembukaan akses","Persemaian/penanaman","Pemeliharaan","Pemanenan","Pengangkutan hasil","Basecamp/workshop","Rehabilitasi"],questions:[{id:"forestFunction",label:"Fungsi/status kawasan",type:"select",options:["Hutan produksi","Hutan lindung/konservasi","APL","Belum diketahui"]},{id:"harvest",label:"Pemanenan hasil hutan",type:"select",options:["Kayu","Non-kayu","Tidak ada"]},{id:"workshop",label:"Workshop/genset di tapak",type:"select",options:["Ada","Tidak ada"]}],impacts:["domestic","runoff","genset","dust","usedoil","chemical","battery","storage","spill","organic","domestic-solid","surface",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"noise"],defaults:["runoff","forest","biodiversity","land-clearing"],waste:["b104d","b105d","b107d","b110d","a102d"]},
+  fisheries:{name:"Perikanan dan budidaya",capacityLabel:"Kapasitas produksi/budidaya",units:["ton/tahun","ha tambak","unit keramba","kapal"],placeholder:"Contoh: 500",activities:["Persiapan kolam/tambak","Pembenihan","Pembesaran","Pakan & obat","Pergantian/sirkulasi air","Pemanenan","Cold storage","Dermaga/kapal"],questions:[{id:"fisheryType",label:"Jenis kegiatan",type:"select",options:["Budidaya air tawar","Tambak payau","Budidaya laut","Penangkapan"]},{id:"feed",label:"Pakan/obat/kimia",type:"select",options:["Digunakan dan disimpan","Digunakan tanpa penyimpanan","Tidak digunakan"]},{id:"discharge",label:"Air buangan budidaya",type:"select",options:["Ke badan air","Diresirkulasi","Tidak ada"]}],impacts:["domestic","process","runoff","genset","usedoil","chemical","battery","storage","spill","organic","packaging","domestic-solid","surface","seawater",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"odor"],defaults:["process","organic","surface","biodiversity"],waste:["b104d","b105d","b107d","b110d","a102d","sector-verify"]},
+  livestock:{name:"Peternakan",capacityLabel:"Populasi/kapasitas ternak",units:["ekor","ekor/tahun","ton produk/tahun"],placeholder:"Contoh: 20.000",activities:["Kandang/area ternak","Pakan & minum","Obat/vaksin","Pemerahan/produksi","Pembersihan kandang","Pengolahan kotoran","Pemotongan internal","Gudang & utilitas"],questions:[{id:"animalType",label:"Jenis ternak",type:"select",options:["Unggas","Sapi/kerbau","Kambing/domba","Babi","Lainnya"]},{id:"manure",label:"Pengelolaan kotoran",type:"select",options:["Kompos","Biogas","IPAL/kolam","Belum ditentukan"]},{id:"slaughter",label:"Pemotongan di lokasi",type:"select",options:["Ada","Tidak ada"]}],impacts:["domestic","process","runoff","genset","odor","usedoil","chemical","medical","storage","spill","organic","packaging","domestic-solid","groundwater","surface",...PROFILE_COMMON.location,...PROFILE_COMMON.social],defaults:["process","organic","odor","ghg"],waste:["b104d","b105d","b107d","b110d","a102d","medical-verify"]},
+  hospitality:{name:"Akomodasi dan penyediaan makanan",capacityLabel:"Kapasitas layanan",units:["kamar","kursi","porsi/hari","tamu/hari"],placeholder:"Contoh: 120",activities:["Kamar/akomodasi","Dapur/restoran","Laundry","Kolam/spa","IPAL domestik","Genset/boiler","Cold storage","Pengelolaan sampah"],questions:[{id:"rooms",label:"Jumlah kamar/kursi",type:"number",placeholder:"Contoh: 120"},{id:"laundry",label:"Laundry di lokasi",type:"select",options:["Ada","Tidak ada"]},{id:"kitchen",label:"Dapur/restoran",type:"select",options:["Ada","Tidak ada"]}],impacts:["domestic","process","oily","genset","boiler","odor","usedoil","chemical","battery","storage","spill","packaging","organic","domestic-solid","sewage-sludge","municipal","groundwater",...PROFILE_COMMON.location,...PROFILE_COMMON.social],defaults:["domestic","organic","domestic-solid","odor"],waste:["b104d","b105d","b107d","b110d","a102d"]},
+  digital:{name:"Pusat data dan layanan digital",capacityLabel:"Kapasitas fasilitas",units:["MW IT load","rack","server","m² ruang data"],placeholder:"Contoh: 20",activities:["Ruang server","Sistem pendingin","Genset cadangan","UPS/baterai","Penyimpanan bahan bakar","Menara/jaringan","Pengolahan air","Pengelolaan e-waste"],questions:[{id:"redundancy",label:"Konfigurasi daya",type:"select",options:["N","N+1","2N","Belum ditentukan"]},{id:"coolingSystem",label:"Sistem pendingin",type:"select",options:["Air cooled","Water cooled","Hybrid"]},{id:"genset",label:"Genset cadangan",type:"select",options:["Ada","Tidak ada"]}],impacts:["domestic","cooling","blowdown","genset","usedoil","chemical","battery","storage","spill","scrap","packaging","domestic-solid","groundwater","municipal","reuse",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"noise","ghg"],defaults:["cooling","genset","battery","usedoil","ghg"],waste:["b104d","b105d","b107d","b110d","a102d"]},
+  realestate:{name:"Kawasan dan real estat",capacityLabel:"Skala pengembangan",units:["ha","unit hunian","m² bangunan","orang terlayani"],placeholder:"Contoh: 50",activities:["Pematangan lahan","Pembangunan bangunan","Jalan & drainase","Air bersih","IPAL kawasan","Ruang terbuka hijau","Pengelolaan sampah","Operasional kawasan"],questions:[{id:"developmentType",label:"Jenis pengembangan",type:"select",options:["Perumahan","Komersial","Kawasan industri","Campuran"]},{id:"occupancy",label:"Populasi rencana",type:"number",placeholder:"Contoh: 5.000"},{id:"estateIpal",label:"IPAL kawasan",type:"select",options:["Ada","Tidak ada/pihak lain"]}],impacts:["domestic","process","runoff","genset","dust","usedoil","chemical","storage","spill","construction-waste","packaging","domestic-solid","sewage-sludge","groundwater","surface","municipal",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"noise"],defaults:["domestic","runoff","construction-waste","land-clearing","traffic"],waste:["b104d","b105d","b107d","b110d","a102d"]},
+  health:{name:"Fasilitas pelayanan kesehatan",capacityLabel:"Kapasitas pelayanan",units:["tempat tidur","pasien/hari","sampel/hari"],placeholder:"Contoh: 150",activities:["Rawat inap/jalan","Laboratorium","Radiologi","Farmasi","Laundry","Dapur","Sterilisasi/autoklaf","IPAL & limbah medis"],questions:[{id:"beds",label:"Tempat tidur operasional",type:"number",placeholder:"Contoh: 150"},{id:"lab",label:"Laboratorium/radiologi",type:"select",options:["Ada","Tidak ada"]},{id:"medicalTreatment",label:"Pengolahan limbah medis di tapak",type:"select",options:["Autoklaf","Insinerator","Tidak ada/pihak ketiga"]}],impacts:["domestic","process","laboratory","boiler","genset","incinerator","usedoil","sludge","chemical","medical","battery","storage","spill","packaging","organic","domestic-solid","sewage-sludge","groundwater","municipal",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"odor"],defaults:["process","laboratory","medical","chemical","storage"],waste:["b104d","b105d","b107d","b110d","a102d","medical-verify"]},
+  services:{name:"Jasa dan kegiatan lainnya",capacityLabel:"Kapasitas layanan utama",units:["pengunjung/hari","orang/hari","unit/tahun","m²"],placeholder:"Contoh: 500",activities:["Operasional utama","Bangunan/fasilitas","Genset/utilitas","Pemakaian air","Air limbah domestik","Bahan kimia pembersih","Sampah & limbah","Mobilitas/parkir"],questions:[{id:"visitors",label:"Pengguna/pengunjung puncak",type:"number",placeholder:"Contoh: 500"},{id:"genset",label:"Genset/boiler",type:"select",options:["Ada","Tidak ada"]},{id:"chemicalUse",label:"B3/bahan kimia",type:"select",options:["Digunakan dan disimpan","Digunakan tanpa penyimpanan","Tidak digunakan"]}],impacts:["domestic","runoff","genset","usedoil","chemical","battery","storage","spill","packaging","organic","domestic-solid","municipal",...PROFILE_COMMON.location,...PROFILE_COMMON.social,"odor"],defaults:["domestic","domestic-solid","traffic"],waste:["b104d","b105d","b107d","b110d","a102d"]}
+};
+
+const WASTE_CATALOG = {
+  b104d:{code:"B104d",name:"Kemasan bekas B3",trigger:"Kemasan pupuk/pestisida, bahan kimia, cat, pelarut, atau produk B3 lain",status:"Kandidat"},
+  b105d:{code:"B105d",name:"Minyak pelumas bekas",trigger:"Mesin, genset, kendaraan, gearbox, hidrolik, separator, atau peralatan berpelumas",status:"Kandidat"},
+  b107d:{code:"B107d",name:"Limbah elektronik",trigger:"Lampu TL, PCB elektronik, kabel/kawat logam, atau perangkat elektronik",status:"Kandidat"},
+  b109d:{code:"B109d",name:"Filter bekas pengendalian pencemaran udara",trigger:"Bag filter atau filter fasilitas pengendalian emisi",status:"Kandidat"},
+  b110d:{code:"B110d",name:"Kain majun bekas dan sejenis",trigger:"Majun, sarung tangan, absorbent, atau material pembersih terkontaminasi",status:"Kandidat"},
+  a102d:{code:"A102d",name:"Baterai/aki bekas",trigger:"Kendaraan, genset, UPS, panel, atau peralatan dengan baterai/aki",status:"Kandidat"},
+  a3301:{code:"A330-1",name:"Residu dasar tangki minyak bumi",trigger:"Eksplorasi dan produksi minyak, gas, dan panas bumi",status:"Sektoral"},
+  a3302:{code:"A330-2",name:"Residu proses produksi migas",trigger:"Eksplorasi dan produksi minyak, gas, dan panas bumi",status:"Sektoral"},
+  b3301:{code:"B330-1",name:"Lumpur bor oil/synthetic base",trigger:"Pengeboran dengan lumpur berbahan dasar minyak atau sintetis",status:"Sektoral"},
+  b3302:{code:"B330-2",name:"Serbuk bor oil/synthetic base",trigger:"Cutting pengeboran berbahan dasar minyak atau sintetis",status:"Sektoral"},
+  a3371:{code:"A337-1",name:"Limbah klinis infeksius",trigger:"Rumah sakit dan fasilitas pelayanan kesehatan",status:"Sektoral"},
+  a3372:{code:"A337-2",name:"Produk farmasi kedaluwarsa",trigger:"Produk farmasi kedaluwarsa dari fasilitas kesehatan",status:"Sektoral"},
+  a3373:{code:"A337-3",name:"Bahan kimia kedaluwarsa",trigger:"Bahan kimia kedaluwarsa dari fasilitas kesehatan",status:"Sektoral"},
+  a3374:{code:"A337-4",name:"Peralatan laboratorium terkontaminasi B3",trigger:"Laboratorium fasilitas kesehatan",status:"Sektoral"},
+  a3375:{code:"A337-5",name:"Peralatan medis mengandung logam berat",trigger:"Peralatan mengandung merkuri, kadmium, atau logam berat sejenis",status:"Sektoral"},
+  b3371:{code:"B337-1",name:"Kemasan produk farmasi",trigger:"Kemasan produk farmasi dari fasilitas kesehatan",status:"Sektoral"},
+  b3372:{code:"B337-2",name:"Sludge IPAL fasilitas kesehatan",trigger:"Lumpur dari IPAL rumah sakit/fasilitas pelayanan kesehatan",status:"Sektoral"},
+  b3421:{code:"B342-1",name:"Sludge minyak atau lemak",trigger:"Pengolahan minyak hewani atau nabati, termasuk minyak kelapa/sawit",status:"Sektoral"},
+  b413:{code:"B413",name:"Spent bleaching earth",trigger:"Proses pemucatan pada industri minyak nabati/hewani",status:"Sektoral"},
+  "pesticide-verify":{code:"Verifikasi",name:"Pestisida kedaluwarsa/tumpah/residu",trigger:"Kode mengikuti produk, kondisi, sumber, dan Lampiran IX PP 22/2021",status:"Perlu data"},
+  "medical-verify":{code:"Verifikasi",name:"Limbah medis/klinis",trigger:"Kode mengikuti jenis limbah infeksius, farmasi, sitotoksik, kimia, atau benda tajam",status:"Perlu data"},
+  "sector-verify":{code:"Verifikasi",name:"Limbah proses spesifik sektor",trigger:"Kode ditentukan setelah bahan baku, proses, kontaminan, dan sumber limbah dikonfirmasi",status:"Perlu data"}
+};
+
+const ACTIVITY_TRIGGERS = {
+  "Pengendalian hama/pestisida":["chemical","packaging","spill","storage"],"Pemupukan":["chemical","packaging","runoff"],"Jalan, drainase & workshop":["usedoil","battery","runoff"],
+  "Produksi minyak/gas":["produced","oily","flare","fugitive"],"Eksplorasi/pengeboran":["process","sludge","spill"],"Pipa & gathering":["hydrotest","spill"],"Terminal/penyimpanan":["voc","spill","storage"],
+  "Proses basah":["process"],"Proses termal":["boiler","vent"],"Utilitas":["genset","blowdown","usedoil"],"IPAL & pengelolaan limbah":["sludge","storage"],
+  "Boiler/turbin":["boiler","turbine","blowdown"],"Cooling system":["cooling","blowdown"],"Abu/residu":["ash","residue"],
+  "Bengkel & pencucian":["oily","usedoil","chemical"],"Pelabuhan/jetty":["coastal","seawater","dredging"],"Laboratorium":["laboratory","chemical"],"IPAL & limbah medis":["process","medical","sludge"]
+};
+
 const IMPACT_GROUPS = [
   {key:"wastewater",name:"Air limbah",icon:"≈",desc:"Semua aliran keluar dan potensi buangan",items:[["domestic","Domestik/sanitasi"],["process","Proses produksi"],["produced","Produced water"],["oily","Oily water/drainase berminyak"],["cooling","Cooling water"],["blowdown","Boiler/cooling blowdown"],["hydrotest","Hydrotest water"],["runoff","Limpasan area kegiatan"],["leachate","Lindi"],["laboratory","Laboratorium"]]},
   {key:"emission",name:"Emisi udara",icon:"↑",desc:"Sumber tetap, bergerak, dan fugitif",items:[["boiler","Boiler/heater"],["genset","Genset/mesin pembakaran dalam"],["turbine","Turbin/kompresor"],["flare","Flare"],["kiln","Kiln/furnace/smelter"],["incinerator","Insinerator"],["vent","Process vent"],["voc","Tangki/VOC"],["fugitive","Emisi fugitif"],["dust","Debu jalan/stockpile"]]},
@@ -69,9 +127,10 @@ const REGENCIES = {
 const DEFAULT_STATE = {
   view:"screening",step:0,
   kblis:[{code:"06100",title:"Pertambangan Minyak Bumi",description:"Kegiatan pertambangan, pengambilan, dan persiapan minyak bumi.",id:"demo-06100"}],
-  projectName:"Proyek Migas Kaltim",projectStatus:"Usaha baru",stage:"Operasi",capacity:"45.000 BOPD",
-  activities:["Eksplorasi/pengeboran","Produksi/eksploitasi","Pipa & gathering","Fasilitas penunjang"],
+  projectName:"Proyek Migas Kaltim",projectStatus:"Usaha baru",stage:"Operasi",capacity:"45000",capacityUnit:"BOPD",
+  activities:["Eksplorasi/pengeboran","Produksi minyak/gas","Pipa & gathering"],
   impacts:["domestic","process","produced","oily","hydrotest","boiler","genset","turbine","flare","fugitive","usedoil","sludge","chemical","storage","spill","groundwater","surface","noise","traffic","ghg"],
+  answers:{fieldType:"Onshore",injection:"Belum ditentukan"},wasteCodes:["b105d","b110d"],showAllImpacts:false,
   province:"Kalimantan Timur",regency:"Kabupaten Kutai Kartanegara",locationFlags:[],openTask:0,
   taskFilter:"all",regFilter:"Semua",regSearch:"",docFilter:"Semua"
 };
@@ -81,7 +140,13 @@ let searchTimer = null;
 let toastTimer = null;
 
 function loadState(){
-  try{return {...DEFAULT_STATE,...JSON.parse(localStorage.getItem("envirotrack-state")||"{}")};}
+  try{
+    const saved=JSON.parse(localStorage.getItem("envirotrack-state")||"{}");
+    const merged={...DEFAULT_STATE,...saved,answers:{...DEFAULT_STATE.answers,...(saved.answers||{})}};
+    if(!saved.capacityUnit){const match=String(saved.capacity||"").match(/([\d.,]+)\s*(.*)/);if(match){merged.capacity=match[1];merged.capacityUnit=match[2]||profileForCode(saved.kblis?.[0]?.code).units[0];}}
+    if(!Array.isArray(merged.wasteCodes))merged.wasteCodes=[];
+    return merged;
+  }
   catch{return {...DEFAULT_STATE};}
 }
 function saveState(silent=true){
@@ -92,6 +157,27 @@ function saveState(silent=true){
 function esc(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 function showToast(message){const el=document.getElementById("toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600);}
 function selectedKbli(){return state.kblis[0]||null;}
+function profileForCode(code){
+  const c=String(code||"");const n=parseInt(c.slice(0,2),10);
+  if(c==="01261")return QUESTIONNAIRE_PROFILES.coconut;
+  if(c==="01262")return QUESTIONNAIRE_PROFILES.oilpalm;
+  if(c.startsWith("014")||c.startsWith("015"))return QUESTIONNAIRE_PROFILES.livestock;
+  if(n===1)return QUESTIONNAIRE_PROFILES.plantation;
+  if(n===2)return QUESTIONNAIRE_PROFILES.forestry;
+  if(n===3)return QUESTIONNAIRE_PROFILES.fisheries;
+  if(c.startsWith("06")||c.startsWith("091"))return QUESTIONNAIRE_PROFILES.migas;
+  if(n>=5&&n<=9)return QUESTIONNAIRE_PROFILES.mining;
+  if(n>=10&&n<=33)return QUESTIONNAIRE_PROFILES.manufacturing;
+  if(n===35)return QUESTIONNAIRE_PROFILES.energy;
+  if(n>=36&&n<=39)return QUESTIONNAIRE_PROFILES.water;
+  if(n>=41&&n<=43)return QUESTIONNAIRE_PROFILES.construction;
+  if(n>=45&&n<=53)return QUESTIONNAIRE_PROFILES.logistics;
+  if(n>=55&&n<=56)return QUESTIONNAIRE_PROFILES.hospitality;
+  if(n>=61&&n<=63)return QUESTIONNAIRE_PROFILES.digital;
+  if(n===68)return QUESTIONNAIRE_PROFILES.realestate;
+  if(n>=86&&n<=88)return QUESTIONNAIRE_PROFILES.health;
+  return QUESTIONNAIRE_PROFILES.services;
+}
 function packFor(code){
   const n=parseInt(String(code).slice(0,2),10);
   if(n>=1&&n<=3)return "agriculture";
@@ -108,7 +194,15 @@ function packFor(code){
   return "services";
 }
 function activePack(){return PACKS[packFor(selectedKbli()?.code||"00")];}
-function isMigas(){const c=selectedKbli()?.code||"";return ["06","09","19"].some(p=>c.startsWith(p));}
+function activeProfile(){return profileForCode(selectedKbli()?.code);}
+function isMigas(){return activeProfile()===QUESTIONNAIRE_PROFILES.migas;}
+function sectorWasteKeys(){
+  const c=selectedKbli()?.code||"";
+  if(isMigas())return ["a3301","a3302","b3301","b3302"];
+  if(activeProfile()===QUESTIONNAIRE_PROFILES.health)return ["a3371","a3372","a3373","a3374","a3375","b3371","b3372"];
+  if(c.startsWith("1042")||c.startsWith("1043"))return ["b3421",...(c==="10423"||["10434","10435","10436","10437"].includes(c)?["b413"]:[])];
+  return [];
+}
 function impactCount(group){return group.items.filter(([key])=>state.impacts.includes(key)).length;}
 function hasGroup(key){const g=IMPACT_GROUPS.find(x=>x.key===key);return g&&g.items.some(([id])=>state.impacts.includes(id));}
 function officialLink(url,label,className="inline-link"){return `<a class="${className}" href="${url}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`;}
@@ -116,6 +210,7 @@ function getPtsp(){if(state.regency==="Kota Balikpapan")return {name:"SPONTAN Ba
 
 function buildTasks(){
   const ptsp=getPtsp();
+  const wasteSummary=state.wasteCodes.map(k=>WASTE_CATALOG[k]).filter(Boolean).map(w=>w.code==="Verifikasi"?w.name:`${w.code} ${w.name}`).join("; ")||"Belum ada kandidat kode dipilih";
   const tasks=[
     {id:"nib",title:"Validasi KBLI, tingkat risiko, dan NIB",cat:"Legalitas",status:"ready",due:"Hari 1",rule:"PP 28/2025",owner:"Legal",reason:"Identitas dan ruang lingkup usaha menentukan perizinan dasar serta kewajiban berikutnya.",evidence:"Kode KBLI, uraian kegiatan, skala, NIB/draf OSS.",system:["OSS",LINKS.oss],ruleUrl:REGULATIONS[0].url},
     {id:"spatial",title:"Unggah polygon dan cek kesesuaian ruang",cat:"Prasyarat",status:"blocked",due:"Hari 2",rule:"Tata ruang pusat/daerah",owner:"GIS",reason:"Koordinat menentukan kewenangan, sensitivitas, dan kesesuaian pemanfaatan ruang.",evidence:"Polygon GeoJSON/KML, luas tapak, dokumen kesesuaian ruang.",system:[state.province==="Kalimantan Timur"?"WebGIS Kaltim":ptsp.name,state.province==="Kalimantan Timur"?LINKS.gisKaltim:ptsp.url],ruleUrl:LINKS.jdihn},
@@ -134,7 +229,7 @@ function buildTasks(){
     {id:"air-report",title:"Siapkan pemantauan dan pelaporan emisi",cat:"Operasi",status:"later",due:"Berkala",rule:"Baku mutu sumber",owner:"Operations",reason:"Pelaporan berkala dan pengujian harus terjadwal sesuai sumber yang aktif.",evidence:"Jadwal sampling, hasil laboratorium, log operasi, laporan elektronik.",system:["SIMPEL",LINKS.simpel],ruleUrl:"https://peraturan.bpk.go.id/Details/235328/permenlhk-no-11-tahun-2021"}
   );
   if(hasGroup("b3"))tasks.push(
-    {id:"b3-inventory",title:"Klasifikasi B3, kode limbah, timbulan, dan pengelolaannya",cat:"B3 & limbah B3",status:"ready",due:"Hari 5",rule:"Permen LHK 6/2021",owner:"Environment",reason:"Kode, sumber, karakteristik, jumlah, masa simpan, dan pihak penerima harus dapat ditelusuri.",evidence:"Neraca limbah, SDS, kode limbah, kontrak pengelola, manifest.",system:["SPEED",LINKS.speed],ruleUrl:"https://peraturan.bpk.go.id/Details/211000/permen-lhk-no-6-tahun-2021/"},
+    {id:"b3-inventory",title:"Klasifikasi B3, kode limbah, timbulan, dan pengelolaannya",cat:"B3 & limbah B3",status:"ready",due:"Hari 5",rule:"PP 22/2021 · Permen LHK 6/2021",owner:"Environment",reason:`Kandidat saat ini: ${wasteSummary}. Setiap kode harus dikonfirmasi terhadap sumber, bahan, kondisi, dan karakteristik aktual.`,evidence:"SDS, foto/sumber limbah, neraca timbulan, kandidat kode, karakteristik, masa simpan, kontrak pengelola, dan manifest.",system:["SPEED",LINKS.speed],ruleUrl:"https://peraturan.bpk.go.id/Details/161852/pp-no-22-tahun-2021"},
     {id:"b3-storage",title:"Siapkan rincian teknis penyimpanan limbah B3",cat:"B3 & limbah B3",status:"blocked",due:"Hari 14",rule:"Permen LHK 6/2021",owner:"Engineering",reason:"Penyimpanan memerlukan desain, kompatibilitas, kapasitas, simbol/label, tanggap darurat, dan pencatatan.",evidence:"Layout dan desain TPS, SOP, logbook, peralatan darurat, foto fasilitas.",system:["SPEED",LINKS.speed],ruleUrl:"https://peraturan.bpk.go.id/Details/211000/permen-lhk-no-6-tahun-2021/"}
   );
   if(state.impacts.includes("spill"))tasks.push({id:"emergency",title:"Susun program kedaruratan B3 dan limbah B3",cat:"Kedaruratan",status:"ready",due:"Hari 15",rule:state.regency==="Kota Balikpapan"?"Perda Balikpapan 3/2025":"PP 22/2021",owner:"HSE",reason:"Kegiatan dengan produksi, penyimpanan, penggunaan, atau bongkar muat B3 memerlukan kesiapsiagaan yang teruji.",evidence:"Peta risiko, organisasi tanggap darurat, peralatan, prosedur, jadwal latihan.",system:[ptsp.name,ptsp.url],ruleUrl:state.regency==="Kota Balikpapan"?"https://jdih.balikpapan.go.id/dokumen/download/895":"https://peraturan.go.id/id/pp-no-22-tahun-2021"});
@@ -149,9 +244,14 @@ function buildTasks(){
 const labels=["Profil","Dampak","Lokasi","Hasil","Tracker"];
 function heading(n,title,desc,actions=""){return `<div class="heading"><div><span class="kicker">LANGKAH ${n} DARI 5</span><h2>${title}</h2><p>${desc}</p></div>${actions?`<div class="heading-actions">${actions}</div>`:""}</div>`;}
 function renderSteps(){document.getElementById("steps").innerHTML=labels.map((x,i)=>`<button class="step ${i===state.step?"active":""} ${i<state.step?"done":""}" data-step="${i}" aria-label="Langkah ${i+1}: ${x}"><span>${i<state.step?"✓":i+1}</span><small>${x}</small></button>`).join("");}
+function renderQuestion(q){
+  const value=state.answers?.[q.id]??"";
+  if(q.type==="select")return `<label class="form-field">${esc(q.label)}<select data-answer="${q.id}"><option value="">Pilih jawaban</option>${q.options.map(x=>`<option ${value===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label>`;
+  return `<label class="form-field">${esc(q.label)}<input data-answer="${q.id}" type="${q.type||"text"}" value="${esc(value)}" placeholder="${esc(q.placeholder||"")}"></label>`;
+}
 
 function renderProfile(){
-  const k=selectedKbli(),pack=activePack();
+  const k=selectedKbli(),profile=activeProfile();
   const selectedCard=k
     ? `<div class="selected-kbli"><span class="kbli-code">${esc(k.code)}</span><div><b>${esc(k.title)}</b><small>${esc(k.description || "Uraian mengikuti KBLI 2025.")}</small></div><button class="icon-button" data-action="remove-kbli" aria-label="Hapus KBLI">×</button></div>`
     : `<div class="empty-note"><b>Belum ada KBLI terpilih</b><p>Cari dan pilih satu hasil untuk membuka penapisan yang sesuai.</p></div>`;
@@ -161,17 +261,22 @@ function renderProfile(){
   <div class="official-line"><span>Seluruh KBLI tersedia melalui pencarian resmi OSS.</span>${officialLink(LINKS.kbli,"Pencarian lengkap OSS")}</div>
   ${selectedCard}
   <details><summary class="helper">API OSS tidak dapat diakses? Masukkan KBLI manual</summary><div class="form-row"><label class="form-field">Kode KBLI<input id="manual-code" maxlength="5" inputmode="numeric" placeholder="Contoh: 06100"></label><label class="form-field">Judul kegiatan<input id="manual-title" placeholder="Nama kegiatan"></label></div><button class="soft" data-action="manual-kbli" style="margin-top:8px">Gunakan KBLI manual</button></details>
-  <div class="label"><b>Jenis kegiatan · ${esc(pack.name)}</b><small>Pilih semua yang sesuai</small></div><div class="activity-grid">${pack.activities.map(x=>`<button class="activity ${state.activities.includes(x)?"on":""}" data-activity="${esc(x)}"><b>${esc(x)}</b><small>${state.activities.includes(x)?"Dipilih":"Klik untuk memilih"}</small></button>`).join("")}</div>
+  <div class="label"><b>Jenis kegiatan · ${esc(profile.name)}</b><small>Hanya proses yang relevan</small></div><div class="activity-grid">${profile.activities.map(x=>`<button class="activity ${state.activities.includes(x)?"on":""}" data-activity="${esc(x)}"><b>${esc(x)}</b><small>${state.activities.includes(x)?"Dipilih":"Klik untuk memilih"}</small></button>`).join("")}</div>
+  ${profile===QUESTIONNAIRE_PROFILES.coconut?`<div class="smart"><span>i</span><div><b>Batas KBLI 01261</b><p>Pengolahan kopra, minyak kelapa, atau produk makanan kelapa bukan bagian kegiatan kebun. Jika ada, tambahkan KBLI 10421, 10422/10423, atau 10793 dan tapis sebagai proses industri terpisah.</p></div></div>`:profile===QUESTIONNAIRE_PROFILES.oilpalm?`<div class="smart"><span>i</span><div><b>Kebun dan pabrik dipisahkan</b><p>KBLI 01262 mencakup pertanian kelapa sawit. Pabrik CPO/CPKO memerlukan KBLI industri terkait, misalnya 10431/10432, dengan satuan dan sumber dampak berbeda.</p></div></div>`:""}
   <div class="form-row"><label class="form-field">Nama proyek<input data-field="projectName" value="${esc(state.projectName)}" placeholder="Nama internal proyek"></label><label class="form-field">Status usaha<select data-field="projectStatus">${["Usaha baru","Pengembangan kapasitas","Perubahan proses/teknologi","Relokasi","Sudah beroperasi"].map(x=>`<option ${state.projectStatus===x?"selected":""}>${x}</option>`).join("")}</select></label></div>
-  <div class="form-row"><label class="form-field">Tahap kegiatan<select data-field="stage">${["Survei","Eksplorasi","Konstruksi","Operasi","Ekspansi","Penutupan/pascaoperasi"].map(x=>`<option ${state.stage===x?"selected":""}>${x}</option>`).join("")}</select></label><label class="form-field">Kapasitas & satuan<input data-field="capacity" value="${esc(state.capacity)}" placeholder="Contoh: 45.000 BOPD / 100 ton per hari"></label></div>`;
+  <div class="form-row"><label class="form-field">Tahap kegiatan<select data-field="stage">${["Survei","Eksplorasi","Konstruksi","Operasi","Ekspansi","Penutupan/pascaoperasi"].map(x=>`<option ${state.stage===x?"selected":""}>${x}</option>`).join("")}</select></label><label class="form-field">${esc(profile.capacityLabel)}<span class="capacity-field"><input data-field="capacity" type="number" min="0" value="${esc(state.capacity)}" placeholder="${esc(profile.placeholder)}"><select data-field="capacityUnit" aria-label="Satuan kapasitas">${profile.units.map(x=>`<option ${state.capacityUnit===x?"selected":""}>${esc(x)}</option>`).join("")}</select></span></label></div>
+  <div class="label"><b>Pertanyaan penentu · ${esc(profile.name)}</b><small>Jawaban memicu pertanyaan berikutnya</small></div><div class="form-row dynamic-questions">${profile.questions.map(renderQuestion).join("")}</div>`;
 }
 
 function renderImpacts(){
-  const pack=activePack();
-  return heading(2,"Petakan semua sumber dampak","Buka tiap kelompok dan tandai sumber yang benar-benar ada pada tahap kegiatanmu. Checklist teknis akan dibuat dari pilihan ini.")+
-  `<div class="impact-groups">${IMPACT_GROUPS.map((g,i)=>`<details class="impact-group" ${impactCount(g)||i<2?"open":""}><summary><span class="impact-icon">${g.icon}</span><div><b>${g.name}</b><small>${g.desc}</small></div><span class="count">${impactCount(g)} dipilih</span></summary><div class="subimpact-list">${g.items.map(([key,label])=>`<label class="subimpact"><input type="checkbox" data-impact="${key}" ${state.impacts.includes(key)?"checked":""}> ${label}</label>`).join("")}</div></details>`).join("")}</div>
+  const profile=activeProfile(),allowed=new Set(profile.impacts);
+  const groups=IMPACT_GROUPS.map(g=>({...g,items:state.showAllImpacts?g.items:g.items.filter(([key])=>allowed.has(key))})).filter(g=>g.items.length);
+  const waste=[...new Set([...profile.waste,...sectorWasteKeys()])].map(key=>[key,WASTE_CATALOG[key]]).filter(([,x])=>x);
+  return heading(2,"Petakan sumber dampak yang relevan",`Daftar sudah disaring untuk ${profile.name}. Pilihan proses dan jawaban profil menentukan sumber yang muncul.`, `<button class="ghost" data-action="toggle-all-impacts">${state.showAllImpacts?"Tampilkan yang relevan":"Lihat semua sumber"}</button>`)+
+  `<div class="impact-groups">${groups.map((g,i)=>`<details class="impact-group" ${impactCount(g)||i<2?"open":""}><summary><span class="impact-icon">${g.icon}</span><div><b>${g.name}</b><small>${g.desc}</small></div><span class="count">${impactCount(g)} dipilih</span></summary><div class="subimpact-list">${g.items.map(([key,label])=>`<label class="subimpact"><input type="checkbox" data-impact="${key}" ${state.impacts.includes(key)?"checked":""}> ${label}</label>`).join("")}</div></details>`).join("")}</div>
   ${isMigas()?`<div class="smart"><span>✦</span><div><b>Paket khusus migas aktif</b><p>Produced water, oily drainage, hydrotest, flare, turbin/kompresor, fugitif, LB3, dan potensi tumpahan dipisahkan agar regulasi teknis tidak terlewat.</p></div></div>`:""}
-  <div class="label"><b>Unit proses terpilih · ${esc(pack.name)}</b><small>${state.activities.length} unit/tahap</small></div><div class="chips">${state.activities.map(x=>`<span class="chip on">${esc(x)}</span>`).join("")||"<span class='helper'>Kembali ke Profil untuk memilih jenis kegiatan.</span>"}</div>`;
+  <details class="waste-panel" ${hasGroup("b3")?"open":""}><summary><div><b>Identifikasi B3 dan limbah B3</b><small>B3 adalah bahan yang digunakan/disimpan; kode berlaku untuk limbah B3 setelah menjadi limbah.</small></div><span class="count">${state.wasteCodes.length} kandidat</span></summary><div class="waste-list">${waste.map(([key,w])=>`<label class="waste-row ${state.wasteCodes.includes(key)?"selected":""}"><input type="checkbox" data-waste="${key}" ${state.wasteCodes.includes(key)?"checked":""}><span class="waste-code ${w.code==="Verifikasi"?"needs-data":""}">${w.code}</span><span><b>${esc(w.name)}</b><small>${esc(w.trigger)}</small></span><em>${w.status}</em></label>`).join("")}</div><div class="waste-foot"><span>Kandidat mengacu Lampiran IX PP 22/2021; kode final harus cocok dengan sumber, bahan, karakteristik, dan kondisi aktual.</span>${officialLink("https://peraturan.bpk.go.id/Details/161852/pp-no-22-tahun-2021","Buka PP 22/2021")}</div></details>
+  <div class="label"><b>Proses terpilih · ${esc(profile.name)}</b><small>${state.activities.length} proses</small></div><div class="chips">${state.activities.map(x=>`<span class="chip on">${esc(x)}</span>`).join("")||"<span class='helper'>Kembali ke Profil untuk memilih jenis kegiatan.</span>"}</div>`;
 }
 
 function renderLocation(){
@@ -198,7 +303,7 @@ function relevantRules(){
 function docRecommendation(){return state.capacity?"AMDAL / UKL-UPL":"Perlu data skala";}
 function renderResult(){
   const k=selectedKbli(),t=buildTasks(),rules=relevantRules();
-  return `<div class="result-head"><span class="ok">✓</span><div><label>HASIL PENAPISAN INDIKATIF</label><h2>${esc(k?.code||"KBLI belum dipilih")} · ${esc(k?.title||"")}</h2><p>${esc(state.projectStatus)} · ${esc(state.stage)} di ${esc(state.regency)}, ${esc(state.province)}</p></div><div class="confidence"><b>${k&&state.capacity?"86%":"64%"}</b><small>kelengkapan input</small></div></div>
+  return `<div class="result-head"><span class="ok">✓</span><div><label>HASIL PENAPISAN INDIKATIF</label><h2>${esc(k?.code||"KBLI belum dipilih")} · ${esc(k?.title||"")}</h2><p>${esc(state.projectStatus)} · ${esc(state.stage)} · ${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"kapasitas belum diisi"} di ${esc(state.regency)}, ${esc(state.province)}</p></div><div class="confidence"><b>${k&&state.capacity?"86%":"64%"}</b><small>kelengkapan input</small></div></div>
   <div class="stats"><div class="stat"><small>Dokumen lingkungan</small><b>${docRecommendation()}</b><span>Final setelah skala & lokasi dicocokkan</span></div><div class="stat"><small>Platform utama</small><b>OSS + AMDALNet</b><span>PTSP mengikuti kewenangan</span></div><div class="stat"><small>Kewajiban terpicu</small><b>${t.length} tugas</b><span>${state.impacts.length} sumber dampak</span></div></div>
   <div class="alert"><span>!</span><div><b>Hasil indikatif, bukan keputusan instansi</b><p>Ambang skala rinci pada Permen LHK 4/2021 dan sensitivitas polygon tetap harus diverifikasi.</p></div><button class="soft" data-step="2">Lengkapi lokasi</button></div>
   <h3 class="rules-title">Regulasi yang terpicu · ${rules.length}</h3><div class="rules">${rules.map(r=>`<div class="rule"><span class="badge ${r.level==="Nasional"?"general":r.level==="Sektoral"?"sectoral":"local"}">${r.level.toUpperCase()}</span><p><b>${esc(r.title)}</b><small>${esc(r.about)}</small></p>${officialLink(r.url,"Sumber")}</div>`).join("")}</div>`;
@@ -213,8 +318,8 @@ function renderTracker(){
 }
 
 function renderContext(){
-  const k=selectedKbli(),pack=activePack(),tasks=buildTasks();
-  document.getElementById("context").innerHTML=`<div class="context-title"><span>RINGKASAN PROYEK</span><span>LIVE</span></div><div class="project-card"><span class="sector-icon">${pack.icon}</span><div><b>${esc(state.projectName)}</b><small>${esc(k?.title||"KBLI belum dipilih")}</small></div><em>${esc(k?.code||"—")}</em></div><dl class="facts"><div><dt>Status</dt><dd>${esc(state.projectStatus)}</dd></div><div><dt>Tahap</dt><dd>${esc(state.stage)}</dd></div><div><dt>Lokasi</dt><dd>${esc(state.regency)}</dd></div><div><dt>Sumber dampak</dt><dd>${state.impacts.length} dipilih</dd></div></dl><div class="divider"></div><div class="trigger-head"><span>YANG SUDAH TERPICU</span><b>${tasks.length}</b></div><div class="trigger-list"><div class="trigger"><span class="dot green-dot"></span><p><b>Dokumen lingkungan</b><small>AMDAL / UKL-UPL / SPPL ditapis</small></p></div>${hasGroup("wastewater")?'<div class="trigger"><span class="dot blue-dot"></span><p><b>Air limbah</b><small>Inventarisasi, Pertek, dan SLO</small></p></div>':""}${hasGroup("emission")?'<div class="trigger"><span class="dot orange-dot"></span><p><b>Emisi</b><small>Sumber, baku mutu, pemantauan</small></p></div>':""}${hasGroup("b3")?'<div class="trigger"><span class="dot red-dot"></span><p><b>B3 & limbah B3</b><small>Neraca, TPS, manifest, darurat</small></p></div>':""}${state.province==="Kalimantan Timur"?'<div class="trigger"><span class="dot purple-dot"></span><p><b>Regulasi daerah</b><small>Pilot Kaltim aktif</small></p></div>':""}</div><div class="divider"></div><div class="legal"><span>§</span><div><b>Dasar aturan transparan</b><p>Tugas memuat sistem tujuan, regulasi, alasan pemicu, dan bukti.</p>${officialLink("#regulasi","Buka basis regulasi")}</div></div><p class="disclaimer">Prototipe pendukung keputusan. Verifikasi tenaga ahli dan keputusan instansi tetap diperlukan.</p>`;
+  const k=selectedKbli(),pack=activePack(),profile=activeProfile(),tasks=buildTasks();
+  document.getElementById("context").innerHTML=`<div class="context-title"><span>RINGKASAN PROYEK</span><span>LIVE</span></div><div class="project-card"><span class="sector-icon">${pack.icon}</span><div><b>${esc(state.projectName)}</b><small>${esc(profile.name)}</small></div><em>${esc(k?.code||"—")}</em></div><dl class="facts"><div><dt>Status</dt><dd>${esc(state.projectStatus)}</dd></div><div><dt>Tahap</dt><dd>${esc(state.stage)}</dd></div><div><dt>Kapasitas</dt><dd>${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"Belum diisi"}</dd></div><div><dt>Lokasi</dt><dd>${esc(state.regency)}</dd></div><div><dt>Sumber dampak</dt><dd>${state.impacts.length} dipilih</dd></div><div><dt>Kandidat LB3</dt><dd>${state.wasteCodes.length}</dd></div></dl><div class="divider"></div><div class="trigger-head"><span>YANG SUDAH TERPICU</span><b>${tasks.length}</b></div><div class="trigger-list"><div class="trigger"><span class="dot green-dot"></span><p><b>Dokumen lingkungan</b><small>AMDAL / UKL-UPL / SPPL ditapis</small></p></div>${hasGroup("wastewater")?'<div class="trigger"><span class="dot blue-dot"></span><p><b>Air limbah</b><small>Inventarisasi, Pertek, dan SLO</small></p></div>':""}${hasGroup("emission")?'<div class="trigger"><span class="dot orange-dot"></span><p><b>Emisi</b><small>Sumber, baku mutu, pemantauan</small></p></div>':""}${hasGroup("b3")?'<div class="trigger"><span class="dot red-dot"></span><p><b>B3 & limbah B3</b><small>Kode kandidat, neraca, TPS, dan manifest</small></p></div>':""}${state.province==="Kalimantan Timur"?'<div class="trigger"><span class="dot purple-dot"></span><p><b>Regulasi daerah</b><small>Pilot Kaltim aktif</small></p></div>':""}</div><div class="divider"></div><div class="legal"><span>§</span><div><b>Dasar aturan transparan</b><p>Tugas memuat sistem tujuan, regulasi, alasan pemicu, dan bukti.</p>${officialLink("#regulasi","Buka basis regulasi")}</div></div><p class="disclaimer">Prototipe pendukung keputusan. Verifikasi tenaga ahli dan keputusan instansi tetap diperlukan.</p>`;
 }
 
 function renderScreening(){
@@ -293,7 +398,42 @@ async function searchKbli(query){
   }finally{spinner.classList.add("hide");}
 }
 
-function setKbli(data){state.kblis=[data];state.activities=[];const pack=activePack();state.activities=pack.activities.slice(0,3);saveState();renderView();showToast(`KBLI ${data.code} dipilih. Paket ${pack.name} diaktifkan.`);}
+function addTriggeredImpacts(keys=[]){state.impacts=[...new Set([...state.impacts,...keys])];}
+function addWasteCodes(keys=[]){state.wasteCodes=[...new Set([...state.wasteCodes,...keys])];}
+function removeImpacts(keys=[]){state.impacts=state.impacts.filter(k=>!keys.includes(k));}
+function removeWasteCodes(keys=[]){state.wasteCodes=state.wasteCodes.filter(k=>!keys.includes(k));}
+function applyAnswerTriggers(id,value){
+  if(id==="chemicalUse"&&value.includes("Digunakan")){addTriggeredImpacts(["chemical","packaging",...(value.includes("disimpan")?["storage","spill"]:[])]);addWasteCodes(["b104d"]);if([QUESTIONNAIRE_PROFILES.coconut,QUESTIONNAIRE_PROFILES.oilpalm,QUESTIONNAIRE_PROFILES.plantation].includes(activeProfile()))addWasteCodes(["pesticide-verify"]);}
+  if(id==="chemicalUse"&&value==="Tidak digunakan"){removeImpacts(["chemical"]);removeWasteCodes(["b104d","pesticide-verify"]);}
+  if(id==="workshop"&&value==="Ada"){addTriggeredImpacts(["usedoil","battery","storage"]);addWasteCodes(["b105d","b110d","a102d"]);}
+  if(id==="workshop"&&value==="Tidak ada"){removeImpacts(["usedoil","battery"]);removeWasteCodes(["b105d","b110d","a102d"]);}
+  if(id==="irrigation"){if(value==="Air permukaan")addTriggeredImpacts(["surface"]);if(value==="Air tanah")addTriggeredImpacts(["groundwater"]);if(value==="Pemasok/PDAM")addTriggeredImpacts(["municipal"]);}
+  if(id==="peatUse"&&value==="Ya")addTriggeredImpacts(["peat"]);
+  if(id==="fieldType"&&value.includes("Offshore"))addTriggeredImpacts(["coastal","seawater","dredging"]);
+  if(id==="wetProcess"&&value==="Ya")addTriggeredImpacts(["process"]);
+  if(id==="wetProcess"&&value==="Tidak")removeImpacts(["process"]);
+  if(id==="thermalProcess"&&value==="Ada")addTriggeredImpacts(["boiler","vent"]);
+  if(id==="thermalProcess"&&value==="Tidak ada")removeImpacts(["boiler","vent"]);
+  if(id==="dewatering"&&value==="Ada")addTriggeredImpacts(["process","surface"]);
+  if(id==="batching"&&value==="Ada")addTriggeredImpacts(["process","dust"]);
+  if(id==="workshop"&&value==="Ada")addTriggeredImpacts(["oily"]);
+  if(id==="marine"&&value==="Ada")addTriggeredImpacts(["coastal","seawater","dredging"]);
+  if(id==="lab"&&value==="Ada")addTriggeredImpacts(["laboratory","chemical"]);
+  if(id==="medicalTreatment"&&value==="Insinerator")addTriggeredImpacts(["incinerator"]);
+  if(id==="feed"&&value.includes("Digunakan")){addTriggeredImpacts(["chemical","packaging",...(value.includes("disimpan")?["storage"]:[])]);addWasteCodes(["b104d"]);}
+  if(id==="slaughter"&&value==="Ada")addTriggeredImpacts(["process","organic","odor"]);
+  if(id==="laundry"&&value==="Ada")addTriggeredImpacts(["process","chemical"]);
+  if(id==="kitchen"&&value==="Ada")addTriggeredImpacts(["oily","organic","odor"]);
+  if(id==="genset"&&value==="Ada"){addTriggeredImpacts(["genset","usedoil","battery"]);addWasteCodes(["b105d","b110d","a102d"]);}
+  if(id==="estateIpal"&&value==="Ada")addTriggeredImpacts(["domestic","process","sewage-sludge"]);
+  if(id==="cargo"&&(value==="B3/kimia"||value==="BBM/migas"))addTriggeredImpacts(["chemical","storage","spill","voc"]);
+  if(id==="facilityType"&&value==="Pengelolaan sampah")addTriggeredImpacts(["leachate","odor","residue"]);
+}
+function setKbli(data){
+  state.kblis=[data];const profile=profileForCode(data.code);
+  state.activities=profile.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.impacts=[...profile.defaults];state.wasteCodes=profile===QUESTIONNAIRE_PROFILES.migas?["b105d","b110d"]:[];state.showAllImpacts=false;
+  state.projectName=data.title;saveState();renderView();showToast(`KBLI ${data.code} dipilih. Pertanyaan, satuan, dampak, dan kandidat limbah sudah disesuaikan.`);
+}
 function updateField(el){
   const key=el.dataset.field;if(!key)return;state[key]=el.value;
   if(key==="province"){const first=(REGENCIES[state.province]||[])[0];if(first)state.regency=first;}
@@ -304,17 +444,20 @@ document.addEventListener("input",e=>{
   if(e.target.id==="kbli-search"){clearTimeout(searchTimer);searchTimer=setTimeout(()=>searchKbli(e.target.value),350);}
   if(e.target.id==="reg-search"){state.regSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
   if(e.target.matches("[data-field][type='text'],[data-field]:not(select)")){state[e.target.dataset.field]=e.target.value;saveState();}
+  if(e.target.matches("input[data-answer]")){state.answers[e.target.dataset.answer]=e.target.value;saveState();}
 });
 document.addEventListener("change",e=>{
   if(e.target.matches("select[data-field]"))updateField(e.target);
+  if(e.target.matches("select[data-answer]")){const id=e.target.dataset.answer;state.answers[id]=e.target.value;applyAnswerTriggers(id,e.target.value);saveState();renderView();}
   if(e.target.matches("[data-impact]")){const k=e.target.dataset.impact;state.impacts=e.target.checked?[...new Set([...state.impacts,k])]:state.impacts.filter(x=>x!==k);saveState();renderView();}
+  if(e.target.matches("[data-waste]")){const k=e.target.dataset.waste;state.wasteCodes=e.target.checked?[...new Set([...state.wasteCodes,k])]:state.wasteCodes.filter(x=>x!==k);addTriggeredImpacts(e.target.checked?["storage"]:[]);saveState();renderView();}
   if(e.target.matches("[data-location]")){const k=e.target.dataset.location;state.locationFlags=e.target.checked?[...new Set([...state.locationFlags,k])]:state.locationFlags.filter(x=>x!==k);saveState();}
 });
 document.addEventListener("click",e=>{
   const viewEl=e.target.closest("[data-view]");if(viewEl){e.preventDefault();state.view=viewEl.dataset.view;if(viewEl.dataset.step!==undefined)state.step=+viewEl.dataset.step;renderView();return;}
   const step=e.target.closest("[data-step]");if(step){state.view="screening";state.step=+step.dataset.step;renderView();return;}
   const result=e.target.closest("[data-kbli-code]");if(result){setKbli({id:result.dataset.kbliId,code:result.dataset.kbliCode,title:result.dataset.kbliTitle,description:result.dataset.kbliDescription});return;}
-  const activity=e.target.closest("[data-activity]");if(activity){const k=activity.dataset.activity;state.activities=state.activities.includes(k)?state.activities.filter(x=>x!==k):[...state.activities,k];renderView();return;}
+  const activity=e.target.closest("[data-activity]");if(activity){const k=activity.dataset.activity,adding=!state.activities.includes(k);state.activities=adding?[...state.activities,k]:state.activities.filter(x=>x!==k);if(adding){const triggers=ACTIVITY_TRIGGERS[k]||[];addTriggeredImpacts(triggers);if(triggers.includes("usedoil"))addWasteCodes(["b105d","b110d"]);if(triggers.includes("chemical")||triggers.includes("packaging"))addWasteCodes(["b104d"]);if(triggers.includes("battery"))addWasteCodes(["a102d","b107d"]);}saveState();renderView();return;}
   const task=e.target.closest("[data-task]");if(task&&!e.target.closest("a")){state.openTask=state.openTask===task.dataset.task?null:task.dataset.task;renderView();return;}
   const tf=e.target.closest("[data-task-filter]");if(tf){state.taskFilter=tf.dataset.taskFilter;renderView();return;}
   const rf=e.target.closest("[data-reg-filter]");if(rf){state.regFilter=rf.dataset.regFilter;renderView();return;}
@@ -322,6 +465,7 @@ document.addEventListener("click",e=>{
   const action=e.target.closest("[data-action]");if(!action)return;
   const a=action.dataset.action;
   if(a==="save")saveState(false);
+  if(a==="toggle-all-impacts"){state.showAllImpacts=!state.showAllImpacts;renderView();}
   if(a==="remove-kbli"){state.kblis=[];state.activities=[];renderView();}
   if(a==="manual-kbli"){const code=document.getElementById("manual-code")?.value.trim(),title=document.getElementById("manual-title")?.value.trim();if(!/^\d{2,5}$/.test(code||"")||!title)return showToast("Isi kode angka dan judul kegiatan terlebih dahulu.");setKbli({id:`manual-${code}`,code,title,description:"KBLI dimasukkan manual — verifikasi uraian pada OSS."});}
   if(a==="upload-polygon")showToast("Unggah polygon adalah simulasi. Integrasi berkas akan ditambahkan di versi backend.");
@@ -345,5 +489,9 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 document.addEventListener("click",e=>{
   if(e.target.closest("#back")){state.step=Math.max(0,state.step-1);renderView();}
-  if(e.target.closest("#next")){if(state.step===4){state.view="projects";}else state.step=Math.min(4,state.step+1);renderView();}
+  if(e.target.closest("#next")){
+    if(state.step===0&&(!selectedKbli()||!state.capacity||!state.capacityUnit||!state.activities.length)){showToast("Pilih KBLI, sedikitnya satu kegiatan, lalu isi kapasitas dan satuannya.");return;}
+    if(state.step===1&&!state.impacts.length){showToast("Pilih sedikitnya satu sumber dampak yang benar-benar ada.");return;}
+    if(state.step===4){state.view="projects";}else state.step=Math.min(4,state.step+1);renderView();
+  }
 });
