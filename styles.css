@@ -824,7 +824,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .content.full .landing{max-width:1240px;margin:0 auto;padding:32px 32px 72px}
 .content.full .landing-hero{min-height:560px;border:1px solid var(--line);border-radius:0;background:#e9eee9;color:var(--ink);grid-template-columns:minmax(0,1.55fr) minmax(300px,.45fr);gap:52px;padding:64px;box-shadow:none}
 .content.full .landing-hero:before{display:none}
-.content.full .hero-copy h2{max-width:900px;margin:0;font:600 clamp(44px,5vw,64px)/.98 "Satoshi",sans-serif;letter-spacing:-.05em}
+.content.full .hero-copy h2{max-width:900px;margin:0;font:600 clamp(44px,4.4vw,56px)/1 "Satoshi",sans-serif;letter-spacing:-.045em}
 .content.full .hero-copy>p{max-width:690px;margin:28px 0 0;color:#52625b;font-size:17px;line-height:1.65}
 .content.full .hero-actions{margin-top:32px}
 .content.full .hero-primary{background:var(--dark);color:#fff;font-size:14px;padding:13px 18px}
