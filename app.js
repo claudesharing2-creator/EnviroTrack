@@ -740,6 +740,12 @@ function loadState(){
   try{
     const saved=JSON.parse(localStorage.getItem("envirotrack-state")||"{}");
     const merged={...DEFAULT_STATE,...saved,answers:{...DEFAULT_STATE.answers,...(saved.answers||{})}};
+    const seenKbli=new Set();
+    merged.kblis=(Array.isArray(merged.kblis)?merged.kblis:[]).filter(k=>{
+      const code=String(k?.code||"");
+      if(!/^\d{5}$/.test(code)||seenKbli.has(code))return false;
+      seenKbli.add(code);return true;
+    });
     if(!saved.capacityUnit){const match=String(saved.capacity||"").match(/([\d.,]+)\s*(.*)/);if(match){merged.capacity=match[1];merged.capacityUnit=match[2]||profileForCode(saved.kblis?.[0]?.code).units[0];}}
     if(!Array.isArray(merged.wasteCodes))merged.wasteCodes=[];
     if(!PROVINCES.includes(merged.province)){merged.province=DEFAULT_STATE.province;merged.regency=DEFAULT_STATE.regency;}
@@ -759,6 +765,7 @@ function saveState(silent=true){
 function esc(value){return String(value??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 function showToast(message){const el=document.getElementById("toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600);}
 function selectedKbli(){return state.kblis[0]||null;}
+function selectedProfiles(){return state.kblis.map(k=>profileForCode(k.code));}
 function profileForCode(code){
   const c=String(code||"");const n=parseInt(c.slice(0,2),10);
   if(c==="01261")return QUESTIONNAIRE_PROFILES.coconut;
@@ -797,13 +804,16 @@ function packFor(code){
 }
 function activePack(){return PACKS[packFor(selectedKbli()?.code||"00")];}
 function activeProfile(){return profileForCode(selectedKbli()?.code);}
-function isMigas(){return activeProfile()===QUESTIONNAIRE_PROFILES.migas;}
+function isMigas(){return selectedProfiles().includes(QUESTIONNAIRE_PROFILES.migas);}
 function sectorWasteKeys(){
-  const c=selectedKbli()?.code||"";
-  if(isMigas())return ["a3301","a3302","b3301","b3302"];
-  if(activeProfile()===QUESTIONNAIRE_PROFILES.health)return ["a3371","a3372","a3373","a3374","a3375","b3371","b3372"];
-  if(c.startsWith("1042")||c.startsWith("1043"))return ["b3421",...(c==="10423"||["10434","10435","10436","10437"].includes(c)?["b413"]:[])];
-  return [];
+  const keys=[];
+  state.kblis.forEach(({code:c})=>{
+    const profile=profileForCode(c);
+    if(profile===QUESTIONNAIRE_PROFILES.migas)keys.push("a3301","a3302","b3301","b3302");
+    if(profile===QUESTIONNAIRE_PROFILES.health)keys.push("a3371","a3372","a3373","a3374","a3375","b3371","b3372");
+    if(c.startsWith("1042")||c.startsWith("1043"))keys.push("b3421",...(c==="10423"||["10434","10435","10436","10437"].includes(c)?["b413"]:[]));
+  });
+  return [...new Set(keys)];
 }
 function impactCount(group){return group.items.filter(([key])=>state.impacts.includes(key)).length;}
 function hasGroup(key){const g=IMPACT_GROUPS.find(x=>x.key===key);return g&&g.items.some(([id])=>state.impacts.includes(id));}
@@ -819,7 +829,7 @@ function buildTasks(){
   const ptsp=getPtsp();
   const wasteSummary=state.wasteCodes.map(k=>WASTE_CATALOG[k]).filter(Boolean).map(w=>w.code==="Verifikasi"?w.name:`${w.code} ${w.name}`).join("; ")||"Belum ada kandidat kode dipilih";
   const tasks=[
-    {id:"nib",title:"Validasi KBLI, tingkat risiko, dan NIB",cat:"Legalitas",status:"ready",due:"Hari 1",rule:"PP 28/2025",owner:"Legal",reason:"Identitas dan ruang lingkup usaha menentukan perizinan dasar serta kewajiban berikutnya.",evidence:"Kode KBLI, uraian kegiatan, skala, NIB/draf OSS.",system:["OSS",LINKS.oss],ruleUrl:REGULATIONS[0].url},
+    {id:"nib",title:"Validasi seluruh KBLI, tingkat risiko, dan NIB",cat:"Legalitas",status:"ready",due:"Hari 1",rule:"PP 28/2025",owner:"Legal",reason:"KBLI utama dan pendukung beserta ruang lingkupnya menentukan perizinan dasar serta kewajiban berikutnya.",evidence:"Daftar KBLI utama dan pendukung, uraian kegiatan, skala tiap bidang usaha, NIB/draf OSS.",system:["OSS",LINKS.oss],ruleUrl:REGULATIONS[0].url},
     {id:"spatial",title:"Unggah polygon dan cek kesesuaian ruang",cat:"Prasyarat",status:"blocked",due:"Hari 2",rule:"Tata ruang pusat/daerah",owner:"GIS",reason:"Koordinat menentukan kewenangan, sensitivitas, dan kesesuaian pemanfaatan ruang.",evidence:"Polygon GeoJSON/KML, luas tapak, dokumen kesesuaian ruang.",system:[state.province==="Kalimantan Timur"?"WebGIS Kaltim":ptsp.name,state.province==="Kalimantan Timur"?LINKS.gisKaltim:ptsp.url],ruleUrl:LINKS.jdihn},
     {id:"screen",title:"Konfirmasi AMDAL / UKL-UPL / SPPL",cat:"Persetujuan lingkungan",status:"ready",due:"Hari 3",rule:"Permen LHK 4/2021",owner:"Environment",reason:"Jenis, skala, dan lokasi kegiatan harus dicocokkan dengan daftar wajib dokumen lingkungan.",evidence:"NIB, KBLI, kapasitas, uraian proses, polygon, hasil penapisan.",system:["AMDALNet",LINKS.amdalnet],ruleUrl:"https://peraturan.go.id/id/permen-lhk-no-4-tahun-2021"},
     {id:"local",title:`Konfirmasi layanan dan kewenangan ${state.regency}`,cat:"Daerah",status:"ready",due:"Hari 3",rule:"PTSP & JDIH daerah",owner:"Legal",reason:"Sebagian proses, rekomendasi, dan ketentuan teknis dipengaruhi lokasi dan kewenangan daerah.",evidence:"Alamat/polygon, identitas pelaku usaha, daftar izin terkait.",system:[ptsp.name,ptsp.url],ruleUrl:LINKS.jdihn}
@@ -859,15 +869,16 @@ function renderQuestion(q){
 
 function renderProfile(){
   const k=selectedKbli(),profile=activeProfile();
-  const selectedCard=k
-    ? `<div class="selected-kbli"><span class="kbli-code">${esc(k.code)}</span><div><b>${esc(k.title)}</b><small>${esc(k.description || "Uraian mengikuti KBLI 2025.")}</small></div><button class="icon-button" data-action="remove-kbli" aria-label="Hapus KBLI">×</button></div>`
+  const selectedCard=state.kblis.length
+    ? `<div class="kbli-list">${state.kblis.map((item,index)=>`<div class="selected-kbli ${index?"supporting":"primary-kbli"}"><span class="kbli-code">${esc(item.code)}</span><div class="kbli-copy"><span class="kbli-role">${index?"Pendukung":"Utama"}</span><b>${esc(item.title)}</b><small>${esc(item.description || "Uraian mengikuti KBLI 2025.")}</small></div><div class="kbli-actions">${index?`<button class="soft compact" data-action="make-primary" data-code="${esc(item.code)}">Jadikan utama</button>`:""}<button class="icon-button" data-action="remove-kbli" data-code="${esc(item.code)}" aria-label="Hapus KBLI ${esc(item.code)}">×</button></div></div>`).join("")}</div>`
     : `<div class="empty-note"><b>Belum ada KBLI terpilih</b><p>Cari dan pilih satu hasil untuk membuka penapisan yang sesuai.</p></div>`;
-  return heading(1,"Mulai dari KBLI dan jenis kegiatan","Cari seluruh KBLI 2025 langsung dari layanan resmi OSS. Setelah dipilih, EnviroTrack menyesuaikan daftar kegiatan, sumber dampak, dan aturan sektoral.")+
-  `<div class="label"><b>KBLI utama</b><small>Wajib · KBLI 2025</small></div>
+  return heading(1,"Mulai dari KBLI dan jenis kegiatan","Pilih kode KBLI final 5 digit dari layanan resmi OSS. Satu perusahaan dapat memiliki satu KBLI utama dan beberapa KBLI pendukung sesuai kegiatan nyata.")+
+  `<div class="label"><b>${k?"Tambah KBLI pendukung":"Pilih KBLI utama"}</b><small>Kode final 5 digit · KBLI 2025</small></div>
   <div class="search-wrap"><span class="search-icon">⌕</span><input id="kbli-search" class="searchbox" autocomplete="off" placeholder="Cari kode atau kegiatan, mis. 06100 / minyak / rumah sakit" aria-label="Cari KBLI 2025"><span id="kbli-spinner" class="spinner hide"></span><div id="kbli-suggestions" class="suggestions hide"></div></div>
-  <div class="official-line"><span>Seluruh KBLI tersedia melalui pencarian resmi OSS.</span>${officialLink(LINKS.kbli,"Pencarian lengkap OSS")}</div>
+  <div class="official-line"><span>Hierarki 2–4 digit disembunyikan; hanya KBLI final yang dapat dipilih.</span>${officialLink(LINKS.kbli,"Pencarian lengkap OSS")}</div>
   ${selectedCard}
-  <details><summary class="helper">API OSS tidak dapat diakses? Masukkan KBLI manual</summary><div class="form-row"><label class="form-field">Kode KBLI<input id="manual-code" maxlength="5" inputmode="numeric" placeholder="Contoh: 06100"></label><label class="form-field">Judul kegiatan<input id="manual-title" placeholder="Nama kegiatan"></label></div><button class="soft" data-action="manual-kbli" style="margin-top:8px">Gunakan KBLI manual</button></details>
+  ${state.kblis.length>1?`<div class="smart"><span>i</span><div><b>${state.kblis.length} KBLI dianalisis bersama</b><p>Kegiatan utama mengendalikan satuan kapasitas dan kuisioner profil. KBLI pendukung menambahkan kandidat sumber dampak, limbah, regulasi, dan tugas; risiko serta skala tiap bidang usaha tetap divalidasi di OSS.</p></div></div>`:""}
+  <details><summary class="helper">API OSS tidak dapat diakses? Masukkan KBLI final secara manual</summary><div class="form-row"><label class="form-field">Kode KBLI 5 digit<input id="manual-code" maxlength="5" inputmode="numeric" placeholder="Contoh: 06100"></label><label class="form-field">Judul kegiatan<input id="manual-title" placeholder="Nama kegiatan"></label></div><button class="soft" data-action="manual-kbli" style="margin-top:8px">${k?"Tambahkan KBLI":"Gunakan sebagai KBLI utama"}</button></details>
   <div class="label"><b>Jenis kegiatan · ${esc(profile.name)}</b><small>Hanya proses yang relevan</small></div><div class="activity-grid">${profile.activities.map(x=>`<button class="activity ${state.activities.includes(x)?"on":""}" data-activity="${esc(x)}"><b>${esc(x)}</b><small>${state.activities.includes(x)?"Dipilih":"Klik untuk memilih"}</small></button>`).join("")}</div>
   ${profile===QUESTIONNAIRE_PROFILES.coconut?`<div class="smart"><span>i</span><div><b>Batas KBLI 01261</b><p>Pengolahan kopra, minyak kelapa, atau produk makanan kelapa bukan bagian kegiatan kebun. Jika ada, tambahkan KBLI 10421, 10422/10423, atau 10793 dan tapis sebagai proses industri terpisah.</p></div></div>`:profile===QUESTIONNAIRE_PROFILES.oilpalm?`<div class="smart"><span>i</span><div><b>Kebun dan pabrik dipisahkan</b><p>KBLI 01262 mencakup pertanian kelapa sawit. Pabrik CPO/CPKO memerlukan KBLI industri terkait, misalnya 10431/10432, dengan satuan dan sumber dampak berbeda.</p></div></div>`:""}
   <div class="form-row"><label class="form-field">Nama proyek<input data-field="projectName" value="${esc(state.projectName)}" placeholder="Nama internal proyek"></label><label class="form-field">Status usaha<select data-field="projectStatus">${["Usaha baru","Pengembangan kapasitas","Perubahan proses/teknologi","Relokasi","Sudah beroperasi"].map(x=>`<option ${state.projectStatus===x?"selected":""}>${x}</option>`).join("")}</select></label></div>
@@ -876,10 +887,11 @@ function renderProfile(){
 }
 
 function renderImpacts(){
-  const profile=activeProfile(),allowed=new Set(profile.impacts);
+  const profile=activeProfile(),profiles=selectedProfiles(),allowed=new Set(profiles.flatMap(p=>p.impacts));
   const groups=IMPACT_GROUPS.map(g=>({...g,items:state.showAllImpacts?g.items:g.items.filter(([key])=>allowed.has(key))})).filter(g=>g.items.length);
-  const waste=[...new Set([...profile.waste,...sectorWasteKeys()])].map(key=>[key,WASTE_CATALOG[key]]).filter(([,x])=>x);
-  return heading(2,"Petakan sumber dampak yang relevan",`Daftar sudah disaring untuk ${profile.name}. Pilihan proses dan jawaban profil menentukan sumber yang muncul.`, `<button class="ghost" data-action="toggle-all-impacts">${state.showAllImpacts?"Tampilkan yang relevan":"Lihat semua sumber"}</button>`)+
+  const waste=[...new Set([...profiles.flatMap(p=>p.waste),...sectorWasteKeys()])].map(key=>[key,WASTE_CATALOG[key]]).filter(([,x])=>x);
+  const profileNames=[...new Set(profiles.map(p=>p.name))].join(", ")||profile.name;
+  return heading(2,"Petakan sumber dampak yang relevan",`Daftar digabung dan disaring dari ${state.kblis.length||1} KBLI: ${profileNames}. Pilihan proses dan jawaban profil menentukan sumber yang muncul.`, `<button class="ghost" data-action="toggle-all-impacts">${state.showAllImpacts?"Tampilkan yang relevan":"Lihat semua sumber"}</button>`)+
   `<div class="impact-groups">${groups.map((g,i)=>`<details class="impact-group" ${impactCount(g)||i<2?"open":""}><summary><span class="impact-icon">${g.icon}</span><div><b>${g.name}</b><small>${g.desc}</small></div><span class="count">${impactCount(g)} dipilih</span></summary><div class="subimpact-list">${g.items.map(([key,label])=>`<label class="subimpact"><input type="checkbox" data-impact="${key}" ${state.impacts.includes(key)?"checked":""}> ${label}</label>`).join("")}</div></details>`).join("")}</div>
   ${isMigas()?`<div class="smart"><span>✦</span><div><b>Paket khusus migas aktif</b><p>Produced water, oily drainage, hydrotest, flare, turbin/kompresor, fugitif, LB3, dan potensi tumpahan dipisahkan agar regulasi teknis tidak terlewat.</p></div></div>`:""}
   <details class="waste-panel" ${hasGroup("b3")?"open":""}><summary><div><b>Identifikasi B3 dan limbah B3</b><small>B3 adalah bahan yang digunakan/disimpan; kode berlaku untuk limbah B3 setelah menjadi limbah.</small></div><span class="count">${state.wasteCodes.length} kandidat</span></summary><div class="waste-list">${waste.map(([key,w])=>`<label class="waste-row ${state.wasteCodes.includes(key)?"selected":""}"><input type="checkbox" data-waste="${key}" ${state.wasteCodes.includes(key)?"checked":""}><span class="waste-code ${w.code==="Verifikasi"?"needs-data":""}">${w.code}</span><span><b>${esc(w.name)}</b><small>${esc(w.trigger)}</small></span><em>${w.status}</em></label>`).join("")}</div><div class="waste-foot"><span>Kandidat mengacu Lampiran IX PP 22/2021; kode final harus cocok dengan sumber, bahan, karakteristik, dan kondisi aktual.</span>${officialLink("https://peraturan.bpk.go.id/Details/161852/pp-no-22-tahun-2021","Buka PP 22/2021")}</div></details>
@@ -911,7 +923,7 @@ function relevantRules(){
 function docRecommendation(){return state.capacity?"AMDAL / UKL-UPL":"Perlu data skala";}
 function renderResult(){
   const k=selectedKbli(),t=buildTasks(),rules=relevantRules();
-  return `<div class="result-head"><span class="ok">✓</span><div><label>HASIL PENAPISAN INDIKATIF</label><h2>${esc(k?.code||"KBLI belum dipilih")} · ${esc(k?.title||"")}</h2><p>${esc(state.projectStatus)} · ${esc(state.stage)} · ${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"kapasitas belum diisi"} di ${esc(state.regency)}, ${esc(state.province)}</p></div><div class="confidence"><b>${k&&state.capacity?"86%":"64%"}</b><small>kelengkapan input</small></div></div>
+  return `<div class="result-head"><span class="ok">✓</span><div><label>HASIL PENAPISAN INDIKATIF</label><h2>${esc(k?.code||"KBLI belum dipilih")} · ${esc(k?.title||"")}</h2><p>${state.kblis.length>1?`${state.kblis.length} KBLI digabung · `:""}${esc(state.projectStatus)} · ${esc(state.stage)} · ${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"kapasitas belum diisi"} di ${esc(state.regency)}, ${esc(state.province)}</p></div><div class="confidence"><b>${k&&state.capacity?"86%":"64%"}</b><small>kelengkapan input</small></div></div>
   <div class="stats"><div class="stat"><small>Dokumen lingkungan</small><b>${docRecommendation()}</b><span>Final setelah skala & lokasi dicocokkan</span></div><div class="stat"><small>Platform utama</small><b>OSS + AMDALNet</b><span>PTSP mengikuti kewenangan</span></div><div class="stat"><small>Kewajiban terpicu</small><b>${t.length} tugas</b><span>${state.impacts.length} sumber dampak</span></div></div>
   <div class="alert"><span>!</span><div><b>Hasil indikatif, bukan keputusan instansi</b><p>Ambang skala rinci pada Permen LHK 4/2021 dan sensitivitas polygon tetap harus diverifikasi.</p></div><button class="soft" data-step="2">Lengkapi lokasi</button></div>
   <h3 class="rules-title">Regulasi yang terpicu · ${rules.length}</h3><div class="rules">${rules.map(r=>`<div class="rule"><span class="badge ${r.level==="Nasional"?"general":r.level==="Sektoral"?"sectoral":"local"}">${r.level.toUpperCase()}</span><p><b>${esc(r.title)}</b><small>${esc(r.about)}</small></p>${officialLink(r.url,"Sumber")}</div>`).join("")}</div>`;
@@ -927,7 +939,7 @@ function renderTracker(){
 
 function renderContext(){
   const k=selectedKbli(),pack=activePack(),profile=activeProfile(),tasks=buildTasks();
-  document.getElementById("context").innerHTML=`<div class="context-title"><span>RINGKASAN PROYEK</span><span>LIVE</span></div><div class="project-card"><span class="sector-icon">${pack.icon}</span><div><b>${esc(state.projectName)}</b><small>${esc(profile.name)}</small></div><em>${esc(k?.code||"—")}</em></div><dl class="facts"><div><dt>Status</dt><dd>${esc(state.projectStatus)}</dd></div><div><dt>Tahap</dt><dd>${esc(state.stage)}</dd></div><div><dt>Kapasitas</dt><dd>${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"Belum diisi"}</dd></div><div><dt>Lokasi</dt><dd>${esc(state.regency)}</dd></div><div><dt>Sumber dampak</dt><dd>${state.impacts.length} dipilih</dd></div><div><dt>Kandidat LB3</dt><dd>${state.wasteCodes.length}</dd></div></dl><div class="divider"></div><div class="trigger-head"><span>YANG SUDAH TERPICU</span><b>${tasks.length}</b></div><div class="trigger-list"><div class="trigger"><span class="dot green-dot"></span><p><b>Dokumen lingkungan</b><small>AMDAL / UKL-UPL / SPPL ditapis</small></p></div>${hasGroup("wastewater")?'<div class="trigger"><span class="dot blue-dot"></span><p><b>Air limbah</b><small>Inventarisasi, Pertek, dan SLO</small></p></div>':""}${hasGroup("emission")?'<div class="trigger"><span class="dot orange-dot"></span><p><b>Emisi</b><small>Sumber, baku mutu, pemantauan</small></p></div>':""}${hasGroup("b3")?'<div class="trigger"><span class="dot red-dot"></span><p><b>B3 & limbah B3</b><small>Kode kandidat, neraca, TPS, dan manifest</small></p></div>':""}${state.province==="Kalimantan Timur"?'<div class="trigger"><span class="dot purple-dot"></span><p><b>Regulasi daerah</b><small>Pilot Kaltim aktif</small></p></div>':""}</div><div class="divider"></div><div class="legal"><span>§</span><div><b>Dasar aturan transparan</b><p>Tugas memuat sistem tujuan, regulasi, alasan pemicu, dan bukti.</p>${officialLink("#regulasi","Buka basis regulasi")}</div></div><p class="disclaimer">Prototipe pendukung keputusan. Verifikasi tenaga ahli dan keputusan instansi tetap diperlukan.</p>`;
+  document.getElementById("context").innerHTML=`<div class="context-title"><span>RINGKASAN PROYEK</span><span>LIVE</span></div><div class="project-card"><span class="sector-icon">${pack.icon}</span><div><b>${esc(state.projectName)}</b><small>${esc(profile.name)}</small></div><em>${esc(k?.code||"—")}${state.kblis.length>1?` +${state.kblis.length-1}`:""}</em></div><dl class="facts"><div><dt>KBLI</dt><dd>${state.kblis.length||0} bidang usaha</dd></div><div><dt>Status</dt><dd>${esc(state.projectStatus)}</dd></div><div><dt>Tahap</dt><dd>${esc(state.stage)}</dd></div><div><dt>Kapasitas utama</dt><dd>${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"Belum diisi"}</dd></div><div><dt>Lokasi</dt><dd>${esc(state.regency)}</dd></div><div><dt>Sumber dampak</dt><dd>${state.impacts.length} dipilih</dd></div><div><dt>Kandidat LB3</dt><dd>${state.wasteCodes.length}</dd></div></dl><div class="divider"></div><div class="trigger-head"><span>YANG SUDAH TERPICU</span><b>${tasks.length}</b></div><div class="trigger-list"><div class="trigger"><span class="dot green-dot"></span><p><b>Dokumen lingkungan</b><small>AMDAL / UKL-UPL / SPPL ditapis</small></p></div>${hasGroup("wastewater")?'<div class="trigger"><span class="dot blue-dot"></span><p><b>Air limbah</b><small>Inventarisasi, Pertek, dan SLO</small></p></div>':""}${hasGroup("emission")?'<div class="trigger"><span class="dot orange-dot"></span><p><b>Emisi</b><small>Sumber, baku mutu, pemantauan</small></p></div>':""}${hasGroup("b3")?'<div class="trigger"><span class="dot red-dot"></span><p><b>B3 & limbah B3</b><small>Kode kandidat, neraca, TPS, dan manifest</small></p></div>':""}${state.province==="Kalimantan Timur"?'<div class="trigger"><span class="dot purple-dot"></span><p><b>Regulasi daerah</b><small>Pilot Kaltim aktif</small></p></div>':""}</div><div class="divider"></div><div class="legal"><span>§</span><div><b>Dasar aturan transparan</b><p>Tugas memuat sistem tujuan, regulasi, alasan pemicu, dan bukti.</p>${officialLink("#regulasi","Buka basis regulasi")}</div></div><p class="disclaimer">Prototipe pendukung keputusan. Verifikasi tenaga ahli dan keputusan instansi tetap diperlukan.</p>`;
 }
 
 function renderScreening(){
@@ -995,11 +1007,16 @@ async function searchKbli(query){
   const list=document.getElementById("kbli-suggestions"),spinner=document.getElementById("kbli-spinner");if(!list||!spinner)return;
   if(query.trim().length<2){list.classList.add("hide");list.innerHTML="";return;}
   spinner.classList.remove("hide");
-  const url=`https://gw.oss.go.id/v2/portal/kbli?kategori=semua&search=${encodeURIComponent(query.trim())}&lang=id&localization=id&limit=9&id_version=fff4053d-cbb0-51e9-9dc5-1e85b5740704`;
+  const url=`https://gw.oss.go.id/v2/portal/kbli?kategori=semua&search=${encodeURIComponent(query.trim())}&lang=id&localization=id&limit=40&id_version=fff4053d-cbb0-51e9-9dc5-1e85b5740704`;
   try{
     const response=await fetch(url,{headers:{Accept:"application/json"}});if(!response.ok)throw new Error("OSS unavailable");
-    const json=await response.json();const results=json?.data?.result||[];
-    list.innerHTML=results.length?results.map(r=>{const s=r._source||{},loc=s.localization?.id||{};return `<button class="suggestion" data-kbli-id="${esc(r._id)}" data-kbli-code="${esc(s.kode)}" data-kbli-title="${esc(loc.judul)}" data-kbli-description="${esc(loc.uraian||"")}"><strong>${esc(s.kode)}</strong><div><b>${esc(loc.judul)}</b><small>${esc((loc.uraian||"").slice(0,180))}${(loc.uraian||"").length>180?"…":""}</small></div></button>`;}).join(""):`<div class="empty-note"><b>Tidak ada hasil</b><p>Coba kata kunci lain atau buka pencarian OSS.</p></div>`;
+    const json=await response.json(),seen=new Set();
+    const results=(json?.data?.result||[]).filter(r=>{
+      const code=String(r?._source?.kode||"");
+      if(!/^\d{5}$/.test(code)||seen.has(code))return false;
+      seen.add(code);return true;
+    }).slice(0,9);
+    list.innerHTML=results.length?results.map(r=>{const s=r._source||{},loc=s.localization?.id||{},already=state.kblis.some(k=>k.code===String(s.kode));return `<button class="suggestion ${already?"selected-result":""}" ${already?"disabled aria-disabled=\"true\"":`data-kbli-id="${esc(r._id)}" data-kbli-code="${esc(s.kode)}" data-kbli-title="${esc(loc.judul)}" data-kbli-description="${esc(loc.uraian||"")}"`}><strong>${esc(s.kode)}</strong><div><b>${esc(loc.judul)}</b><small>${already?"Sudah dipilih":`${esc((loc.uraian||"").slice(0,180))}${(loc.uraian||"").length>180?"…":""}`}</small></div></button>`;}).join(""):`<div class="empty-note"><b>Tidak ada KBLI final 5 digit</b><p>Coba kata kunci yang lebih spesifik atau buka pencarian OSS.</p></div>`;
     list.classList.remove("hide");
   }catch{
     list.innerHTML=`<div class="empty-note"><b>Layanan KBLI OSS belum dapat dijangkau</b><p>Gunakan input manual atau buka pencarian resmi OSS.</p>${officialLink(LINKS.kbli,"Buka OSS KBLI")}</div>`;list.classList.remove("hide");
@@ -1042,6 +1059,33 @@ function setKbli(data){
   state.activities=profile.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.impacts=[...profile.defaults];state.wasteCodes=profile===QUESTIONNAIRE_PROFILES.migas?["b105d","b110d"]:[];state.showAllImpacts=false;
   state.projectName=data.title;saveState();renderView();showToast(`KBLI ${data.code} dipilih. Pertanyaan, satuan, dampak, dan kandidat limbah sudah disesuaikan.`);
 }
+function addKbli(data){
+  const code=String(data?.code||"");
+  if(!/^\d{5}$/.test(code))return showToast("Pilih kode KBLI final 5 digit.");
+  if(state.kblis.some(k=>k.code===code))return showToast(`KBLI ${code} sudah ada di proyek ini.`);
+  if(!state.kblis.length){setKbli({...data,code});return;}
+  const profile=profileForCode(code);
+  state.kblis.push({...data,code});
+  addTriggeredImpacts(profile.defaults);
+  if(profile===QUESTIONNAIRE_PROFILES.migas)addWasteCodes(["b105d","b110d"]);
+  saveState();renderView();showToast(`KBLI ${code} ditambahkan sebagai KBLI pendukung.`);
+}
+function makePrimaryKbli(code){
+  const index=state.kblis.findIndex(k=>k.code===code);if(index<1)return;
+  const [item]=state.kblis.splice(index,1);state.kblis.unshift(item);
+  const profile=profileForCode(code);
+  state.activities=profile.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.showAllImpacts=false;addTriggeredImpacts(profile.defaults);state.projectName=item.title;
+  saveState();renderView();showToast(`KBLI ${code} sekarang menjadi KBLI utama. Kapasitas dan kuisioner utama sudah disesuaikan.`);
+}
+function removeKbli(code){
+  const index=state.kblis.findIndex(k=>k.code===code);if(index<0)return;
+  const wasPrimary=index===0;state.kblis.splice(index,1);
+  if(wasPrimary&&state.kblis.length){
+    const next=state.kblis[0],profile=profileForCode(next.code);
+    state.activities=profile.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.projectName=next.title;addTriggeredImpacts(profile.defaults);
+  }else if(!state.kblis.length){state.activities=[];state.capacity="";state.answers={};state.impacts=[];state.wasteCodes=[];}
+  saveState();renderView();showToast(state.kblis.length?`KBLI ${code} dihapus dari proyek.`:"Semua KBLI telah dihapus.");
+}
 function updateField(el){
   const key=el.dataset.field;if(!key)return;state[key]=el.value;
   if(key==="province")state.regency=(REGENCIES[state.province]||[])[0]||"";
@@ -1064,7 +1108,7 @@ document.addEventListener("change",e=>{
 document.addEventListener("click",e=>{
   const viewEl=e.target.closest("[data-view]");if(viewEl){e.preventDefault();state.view=viewEl.dataset.view;if(viewEl.dataset.step!==undefined)state.step=+viewEl.dataset.step;renderView();return;}
   const step=e.target.closest("[data-step]");if(step){state.view="screening";state.step=+step.dataset.step;renderView();return;}
-  const result=e.target.closest("[data-kbli-code]");if(result){setKbli({id:result.dataset.kbliId,code:result.dataset.kbliCode,title:result.dataset.kbliTitle,description:result.dataset.kbliDescription});return;}
+  const result=e.target.closest("[data-kbli-code]");if(result){addKbli({id:result.dataset.kbliId,code:result.dataset.kbliCode,title:result.dataset.kbliTitle,description:result.dataset.kbliDescription});return;}
   const activity=e.target.closest("[data-activity]");if(activity){const k=activity.dataset.activity,adding=!state.activities.includes(k);state.activities=adding?[...state.activities,k]:state.activities.filter(x=>x!==k);if(adding){const triggers=ACTIVITY_TRIGGERS[k]||[];addTriggeredImpacts(triggers);if(triggers.includes("usedoil"))addWasteCodes(["b105d","b110d"]);if(triggers.includes("chemical")||triggers.includes("packaging"))addWasteCodes(["b104d"]);if(triggers.includes("battery"))addWasteCodes(["a102d","b107d"]);}saveState();renderView();return;}
   const task=e.target.closest("[data-task]");if(task&&!e.target.closest("a")){state.openTask=state.openTask===task.dataset.task?null:task.dataset.task;renderView();return;}
   const tf=e.target.closest("[data-task-filter]");if(tf){state.taskFilter=tf.dataset.taskFilter;renderView();return;}
@@ -1074,8 +1118,9 @@ document.addEventListener("click",e=>{
   const a=action.dataset.action;
   if(a==="save")saveState(false);
   if(a==="toggle-all-impacts"){state.showAllImpacts=!state.showAllImpacts;renderView();}
-  if(a==="remove-kbli"){state.kblis=[];state.activities=[];renderView();}
-  if(a==="manual-kbli"){const code=document.getElementById("manual-code")?.value.trim(),title=document.getElementById("manual-title")?.value.trim();if(!/^\d{2,5}$/.test(code||"")||!title)return showToast("Isi kode angka dan judul kegiatan terlebih dahulu.");setKbli({id:`manual-${code}`,code,title,description:"KBLI dimasukkan manual — verifikasi uraian pada OSS."});}
+  if(a==="remove-kbli")removeKbli(action.dataset.code);
+  if(a==="make-primary")makePrimaryKbli(action.dataset.code);
+  if(a==="manual-kbli"){const code=document.getElementById("manual-code")?.value.trim(),title=document.getElementById("manual-title")?.value.trim();if(!/^\d{5}$/.test(code||"")||!title)return showToast("Isi kode KBLI final 5 digit dan judul kegiatan.");addKbli({id:`manual-${code}`,code,title,description:"KBLI dimasukkan manual — verifikasi uraian pada OSS."});}
   if(a==="upload-polygon")showToast("Unggah polygon adalah simulasi. Integrasi berkas akan ditambahkan di versi backend.");
   if(a==="start-task")showToast("Tugas ditandai mulai. Bukti dapat ditambahkan di menu Dokumen.");
   if(a==="new-project"){state.view="screening";state.step=0;renderView();}
