@@ -999,3 +999,25 @@ body.public-mode .app{display:none}
 .stage-button{white-space:nowrap}
 @media(max-width:850px){.stage-copy{top:auto;bottom:82px;transform:none;right:58px}.stage-description{max-width:430px}}
 @media(max-width:560px){.stage-copy{top:auto;bottom:74px;transform:none;right:42px}.stage-description{max-width:300px}.stage-nav .stage-nav-cta{white-space:nowrap}.stage-button{max-width:calc(100vw - 88px)}}
+
+
+/* Viewport-short safety: keep hero content and CTA inside the card */
+.immersive-stage{min-height:clamp(690px,calc(100dvh - 112px),790px)}
+.stage-card{min-height:clamp(640px,calc(100dvh - 164px),730px)}
+@media(max-width:850px){.immersive-stage{min-height:clamp(650px,calc(100dvh - 98px),790px)}.stage-card{min-height:clamp(610px,calc(100dvh - 126px),760px)}}
+@media(max-width:560px){.immersive-stage{min-height:clamp(650px,calc(100dvh - 78px),790px)}.stage-card{min-height:clamp(610px,calc(100dvh - 94px),760px)}}
+
+
+/* Short desktop viewport: scale the display lockup to the available vertical space */
+@media (min-width:851px) and (max-height:720px){
+  .immersive-stage{min-height:clamp(560px,calc(100dvh - 98px),690px)}
+  .stage-card{min-height:clamp(520px,calc(100dvh - 126px),640px)}
+  .stage-nav{padding:20px clamp(25px,4vw,58px)}
+  .stage-copy{left:clamp(25px,8vw,110px);bottom:70px;max-width:650px}
+  .stage-copy h1{font-size:clamp(48px,8vh,86px);line-height:.84}
+  .stage-label{margin-bottom:12px}
+  .stage-description{max-width:480px;margin-top:19px;font-size:13px;line-height:1.5}
+  .stage-actions{margin-top:20px}
+  .stage-footer{bottom:18px}
+  .index-card{bottom:12px;transform:rotate(3deg) scale(.9)}
+}
