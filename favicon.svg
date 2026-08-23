@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="EnviroTrack">
+  <rect width="64" height="64" rx="16" fill="#0f4d3c"/>
+  <path d="M17 15h30v8H27v8h17v8H27v10h-10V15Z" fill="#e7f2e8"/>
+  <path d="M45 15h3v34h-8V23h-8v-8h13Z" fill="#8fc7a7"/>
+</svg>
