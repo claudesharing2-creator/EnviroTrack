@@ -978,3 +978,26 @@ body.public-mode{background:#172d27;overflow-x:hidden}body.public-mode .public-l
 
 /* Mobile clarity: keep the decorative rail away from the display headline */
 @media(max-width:560px){.stage-rail{display:none}}
+
+/* Local document workspace */
+.doc-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:min(100%,480px)}
+.doc-actions button{width:100%;white-space:nowrap}
+.storage-banner{grid-template-columns:34px minmax(0,1fr) auto}
+.storage-actions{grid-column:2/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid #ead7bb;padding-top:9px}
+.storage-actions details{border:0;padding:0;min-width:230px}
+.storage-actions summary{font-size:8px;font-weight:900;color:#83572f;cursor:pointer}
+.storage-actions details p{margin-top:6px}
+.doc-file-meta{display:flex;gap:8px;min-width:0;border-bottom:1px solid #eef0ed;padding-bottom:8px;color:#829089;font-size:8px;line-height:1.4}
+.doc-file-meta span:first-child{flex:0 0 auto;font-weight:700;color:#557266}
+.doc-file-meta span:last-child{min-width:0;overflow-wrap:anywhere}
+@media(max-width:700px){
+  .doc-actions{grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:7px}
+  .doc-actions button{width:100%;min-height:38px;padding:8px 7px;font-size:10px}
+  .doc-actions .primary{grid-column:1/-1}
+  .storage-banner{grid-template-columns:34px minmax(0,1fr);align-items:start}
+  .storage-state{grid-column:2;justify-self:start;margin-top:2px}
+  .storage-actions{grid-column:1/-1;align-items:stretch;gap:8px}
+  .storage-actions button{width:100%;min-height:38px}
+  .storage-actions details{min-width:0;width:100%}
+  .doc-file-meta{display:grid;gap:4px}
+}
