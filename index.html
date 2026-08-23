@@ -9,12 +9,31 @@
   <link rel="preconnect" href="https://gw.oss.go.id">
   <link rel="preconnect" href="https://api.fontshare.com">
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260824-08">
+  <link rel="stylesheet" href="styles.css?v=20260824-10">
 </head>
 <body>
   <a class="skip-link skip-public" href="#public-title">Lewati ke konten utama</a>
   <a class="skip-link skip-app" href="#main-content">Lewati ke workspace</a>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div class="entry-gate" id="entry-gate" aria-hidden="true" hidden>
+    <div class="entry-backdrop" data-entry-action="close" aria-hidden="true"></div>
+    <section class="entry-dialog" role="dialog" aria-modal="true" aria-labelledby="entry-title" aria-describedby="entry-description">
+      <button type="button" class="entry-close" data-entry-action="close" aria-label="Tutup pilihan workspace">×</button>
+      <small class="entry-kicker">MASUK KE WORKSPACE</small>
+      <h2 id="entry-title">Apa yang ingin kamu lakukan?</h2>
+      <p id="entry-description">Pilih cara masuk. Workspace lokal yang sudah tersimpan tidak akan diubah sampai kamu memilih aksinya.</p>
+      <div class="entry-options">
+        <button type="button" class="entry-option entry-option-primary" data-entry-action="resume" id="entry-resume" hidden><span class="entry-option-index">01</span><span><b>Lanjutkan workspace terakhir</b><small id="entry-resume-note">Memuat state yang tersimpan di perangkat ini.</small></span><strong>→</strong></button>
+        <button type="button" class="entry-option" data-entry-action="new"><span class="entry-option-index">01</span><span><b>Mulai penapisan baru</b><small>Formulir kosong tanpa membawa proyek lama.</small></span><strong>→</strong></button>
+        <button type="button" class="entry-option" data-entry-action="load-state"><span class="entry-option-index">02</span><span><b>Load save file</b><small>Memulihkan proyek dan progress dari file JSON.</small></span><strong>↑</strong></button>
+        <button type="button" class="entry-option" data-entry-action="load-zip"><span class="entry-option-index">03</span><span><b>Load workspace ZIP</b><small>Memulihkan state sekaligus dokumen dari bundle.</small></span><strong>↑</strong></button>
+        <button type="button" class="entry-option entry-option-subtle" data-entry-action="empty"><span class="entry-option-index">04</span><span><b>Buka workspace kosong</b><small>Masuk ke overview tanpa memilih proyek.</small></span><strong>→</strong></button>
+      </div>
+      <p class="entry-footnote">State dan file lokal tetap berada di perangkat atau browser yang kamu pilih. Memuat save file dari perangkat lain tidak menghapus file asli.</p>
+      <input class="hide" id="entry-state-input" type="file" accept="application/json,.json">
+      <input class="hide" id="entry-workspace-input" type="file" accept=".zip,application/zip">
+    </section>
+  </div>
   <main class="public-landing" id="public-landing" aria-labelledby="public-title">
     <div class="public-ambient">
       <header class="public-topline">
@@ -48,7 +67,7 @@
 
       <section class="public-brief" id="public-fokus"><div><p class="public-eyebrow">Cara kerja EnviroTrack</p><h2>Jangan mulai dari portal. Mulai dari konteks.</h2></div><p>EnviroTrack menyusun data kegiatan menjadi gambaran kerja yang lebih mudah dibaca. Basis regulasi tetap bersifat umum. Konteks proyek hanya dipakai ketika kamu ingin melihat aturan dan pekerjaan yang terpicu.</p></section>
       <section class="public-image-strip" aria-label="Fokus lingkungan"><figure><img src="assets/enviro-water.jpg" alt="Fasilitas pengolahan air dengan vegetasi di tepi sungai" loading="lazy"><figcaption><span>02 / AIR</span>Air, proses, dan pemantauan</figcaption></figure><figure><img src="assets/enviro-field.jpg" alt="Perangkat pemantauan kualitas air di tepi sungai" loading="lazy"><figcaption><span>03 / LOKASI</span>Lokasi, bukti, dan tindakan</figcaption></figure></section>
-      <section class="public-bottom" id="public-kontak"><div><p class="public-eyebrow">Mulai penapisan</p><h2>Formulir baru setiap kali.</h2><p>Setiap klik “Mulai penapisan” membuka formulir penapisan baru. Data dari proyek lama tidak ikut terbawa.</p></div><button type="button" class="stage-button stage-button-dark" data-public-action="open-screening">Buka formulir baru <span aria-hidden="true">↗</span></button></section>
+      <section class="public-bottom" id="public-kontak"><div><p class="public-eyebrow">Mulai atau lanjutkan</p><h2>Pilih cara masuk ke workspace.</h2><p>Mulai dari formulir kosong, lanjutkan workspace lokal, atau load save file dan bundle ZIP dari perangkat lain.</p></div><button type="button" class="stage-button stage-button-dark" data-public-action="open-screening">Buka pilihan workspace <span aria-hidden="true">↗</span></button></section>
       <footer class="public-footer"><p>Alat bantu penapisan dan pengelolaan pekerjaan lingkungan.</p><div class="creator-block"><span>Dibuat oleh</span><strong>Rizky Bakti Caturraga</strong><div><a href="https://www.linkedin.com/in/rizkycaturraga/" target="_blank" rel="noopener noreferrer">LinkedIn</a><a href="https://www.instagram.com/rzkycaturraga/" target="_blank" rel="noopener noreferrer">Instagram</a></div></div></footer>
     </div>
   </main>
@@ -104,6 +123,6 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
-  <script src="app-20260821-17.js?v=20260824-08" defer></script>
+  <script src="app-20260821-17.js?v=20260824-10" defer></script>
 </body>
 </html>

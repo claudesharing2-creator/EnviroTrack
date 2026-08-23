@@ -820,7 +820,14 @@ let state = loadState();
 function createNewProjectState(){
   return {...DEFAULT_STATE,view:"screening",step:0,kblis:[],projectName:"Proyek baru",projectStatus:"Usaha baru",stage:"Pra-konstruksi",capacity:"",capacityUnit:"",activities:[],impacts:[],answers:{},wasteCodes:[],showAllImpacts:false,showAllWaste:false,legalPurpose:"business",legalOwners:"",legalUmk:"",locationFlags:[],openTask:0,taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false}};
 }
-function setPublicMode(isPublic){document.body.classList.toggle("public-mode",isPublic);document.getElementById("public-landing")?.setAttribute("aria-hidden",String(!isPublic));document.getElementById("main-content")?.setAttribute("aria-hidden",String(isPublic));}
+let entryGateTrigger=null;
+function storedWorkspace(){const saved=readStoredState();return saved&&typeof saved==="object"&&Object.keys(saved).length?saved:null;}
+function openEntryGate(trigger){const gate=document.getElementById("entry-gate");if(!gate)return;entryGateTrigger=trigger||document.activeElement;const saved=storedWorkspace(),resume=document.getElementById("entry-resume"),note=document.getElementById("entry-resume-note");if(resume){resume.hidden=!saved;if(saved)note.textContent=`${saved.projectName||"Workspace terakhir"} · langkah ${Math.min(5,Number(saved.step||0)+1)} dari 5`;}gate.hidden=false;gate.setAttribute("aria-hidden","false");document.body.classList.add("entry-gate-open");requestAnimationFrame(()=>gate.querySelector(".entry-option:not([hidden]),.entry-close")?.focus());}
+function closeEntryGate(restoreFocus=true){const gate=document.getElementById("entry-gate");if(!gate)return;gate.hidden=true;gate.setAttribute("aria-hidden","true");document.body.classList.remove("entry-gate-open");if(restoreFocus&&entryGateTrigger?.focus)entryGateTrigger.focus();entryGateTrigger=null;}
+function startNewFromEntry(){closeEntryGate(false);state=createNewProjectState();renderView();}
+function resumeFromEntry(){const saved=storedWorkspace();if(!saved){showToast("Belum ada workspace lokal untuk dilanjutkan.");return;}closeEntryGate(false);state=normalizeState(saved);renderView();}
+function emptyWorkspaceFromEntry(){closeEntryGate(false);state=createNewProjectState();state.view="home";state.projectName="Belum ada proyek";state.documents=[];renderView();}
+function setPublicMode(isPublic){document.body.classList.toggle("public-mode",isPublic);document.getElementById("public-landing")?.setAttribute("aria-hidden",String(!isPublic));document.getElementById("main-content")?.setAttribute("aria-hidden",String(isPublic));if(!isPublic)closeEntryGate(false);}
 let searchTimer = null;
 let toastTimer = null;
 
@@ -1372,6 +1379,7 @@ function updateField(el){
   saveState();renderView();
 }
 
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("entry-gate")?.hidden)closeEntryGate();});
 document.addEventListener("input",e=>{
   if(e.target.id==="kbli-search"){clearTimeout(searchTimer);searchTimer=setTimeout(()=>searchKbli(e.target.value),350);}
   if(e.target.id==="reg-search"){state.regSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
@@ -1394,11 +1402,11 @@ document.addEventListener("change",e=>{
     const projectName=task?state.projectName:(documentProjectNames().includes(state.docProject)?state.docProject:state.projectName);
     (async()=>{const additions=[];for(const [i,file] of files.entries()){const stored=await storeUploadedFile(file,projectName,category);additions.push({id:`doc-${Date.now()}-${i}`,name:file.name,category,status:"Draf",date,projectName,taskIds:task?[task.id]:[],...stored});}state.documents=[...(state.documents||[]),...additions];state.docFilter="Semua";if(task){const progress=progressForTask(task.id),total=guideForTask(task).steps.length;if(progress.done.length===total)state.taskProgress[taskProgressKey(task.id)]={status:"completed",done:progress.done,markedAt:progress.markedAt};}saveState();renderView();showToast(`${files.length} dokumen ditambahkan${task?" dan ditautkan ke tugas":""}.`);})().catch(()=>showToast("Dokumen gagal disimpan. Coba lagi atau pilih folder lain."));return;
   }
-  if(e.target.id==="state-file-input"){
-    const file=e.target.files?.[0];if(file)importStateFile(file);return;
+  if(e.target.id==="state-file-input"||e.target.id==="entry-state-input"){
+    const file=e.target.files?.[0];if(file){if(e.target.id==="entry-state-input")closeEntryGate(false);importStateFile(file);}e.target.value="";return;
   }
-  if(e.target.id==="workspace-file-input"){
-    const file=e.target.files?.[0];if(file)importWorkspaceZip(file);return;
+  if(e.target.id==="workspace-file-input"||e.target.id==="entry-workspace-input"){
+    const file=e.target.files?.[0];if(file){if(e.target.id==="entry-workspace-input")closeEntryGate(false);importWorkspaceZip(file);}e.target.value="";return;
   }
   if(e.target.matches("select[data-field='docProject']")){state.docProject=e.target.value;state.docFilter="Semua";state.docSearch="";saveState();renderView();return;}
   if(e.target.matches("select[data-field]"))updateField(e.target);
@@ -1418,10 +1426,11 @@ document.addEventListener("click",e=>{
   const publicAction=e.target.closest("[data-public-action]");
   if(publicAction){
     e.preventDefault();
-    if(publicAction.dataset.publicAction==="open-screening"){state=createNewProjectState();renderView();return;}
+    if(publicAction.dataset.publicAction==="open-screening"){openEntryGate(publicAction);return;}
     if(publicAction.dataset.publicAction==="open-regulations"){state.view="regulations";state.regMode="all";renderView();return;}
     if(publicAction.dataset.publicAction==="open-landing"){setPublicMode(true);history.replaceState(null,"",location.pathname);return;}
   }
+  const entryAction=e.target.closest("[data-entry-action]");if(entryAction){const actionName=entryAction.dataset.entryAction;if(actionName==="close"){closeEntryGate();return;}if(actionName==="new"){startNewFromEntry();return;}if(actionName==="resume"){resumeFromEntry();return;}if(actionName==="empty"){emptyWorkspaceFromEntry();return;}if(actionName==="load-state"){document.getElementById("entry-state-input")?.click();return;}if(actionName==="load-zip"){document.getElementById("entry-workspace-input")?.click();return;}}
   const directAction=e.target.closest("[data-action]");if(directAction?.dataset.action==="new-project"){e.preventDefault();state=createNewProjectState();renderView();return;}
   const viewEl=e.target.closest("[data-view]");if(viewEl){e.preventDefault();if(viewEl.dataset.view==="screening"){state=createNewProjectState();if(viewEl.dataset.step!==undefined)state.step=+viewEl.dataset.step;}else{state.view=viewEl.dataset.view;if(state.view==="documents")state.documentTask=null;if(state.view==="regulations")state.regMode=viewEl.dataset.regOpen||"all";if(viewEl.dataset.step!==undefined)state.step=+viewEl.dataset.step;}renderView();return;}
   const step=e.target.closest("[data-step]");if(step){state.view="screening";state.step=+step.dataset.step;renderView();scrollWorkspaceTop();return;}
