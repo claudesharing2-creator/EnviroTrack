@@ -669,7 +669,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .waste-row em{font-size:7px;font-style:normal;text-align:right;color:#6c7973}
 .waste-code{border-radius:5px;background:#e4eee9;color:#2f6c55;padding:5px;text-align:center;font-size:7px;font-weight:900}
 .waste-code.needs-data{background:#fff0dc;color:#9b602e}
-.waste-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e6e9e4;background:#f7f8f5;padding:10px 12px;font-size:7px;line-height:1.45;color:#6f7d76}
+.waste-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e6e9e4;background:#f7f8f5;padding:10px 12px;font-size:7px;line-height:1.45;color:#6f7d76}.waste-panel>.compact{margin:10px 12px 12px;min-height:34px}
 @media(max-width:700px){.capacity-field,.dynamic-questions{grid-template-columns:1fr}
 .waste-row{grid-template-columns:18px 58px 1fr}
 .waste-row em{grid-column:3;text-align:left}
