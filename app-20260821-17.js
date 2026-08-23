@@ -18,6 +18,12 @@ const LINKS = {
   ptspKukar: "https://dpmptsp.kukarkab.go.id/website/sp-sop"
 };
 
+const OFFICIAL_MAP_LAYERS = [
+  {id:"rtr-rdtr-kaltim",title:"RTR/RDTR · Kalimantan Timur",scope:"Tata ruang",serviceType:"WMS",endpoint:"",layerName:"",publisher:"ATR/BPN atau walidata pemda",legalBasis:"Peraturan RTR/RDTR yang berlaku",officialUrl:"https://bhumi.atrbpn.go.id/",status:"not-configured",defaultVisible:false},
+  {id:"kawasan-hutan-konservasi",title:"Kawasan hutan & konservasi",scope:"Kawasan sensitif",serviceType:"WMS",endpoint:"",layerName:"",publisher:"Walidata kehutanan/lingkungan",legalBasis:"Dataset resmi sesuai metadata walidata",officialUrl:"https://onemap.big.go.id/",status:"not-configured",defaultVisible:false},
+  {id:"gambut-pesisir-sempadan",title:"Gambut, pesisir & sempadan",scope:"Kawasan sensitif",serviceType:"WMS",endpoint:"",layerName:"",publisher:"Walidata sektoral/daerah",legalBasis:"Dataset resmi sesuai metadata walidata",officialUrl:"https://onemap.big.go.id/",status:"not-configured",defaultVisible:false}
+];
+window.ENVIRO_OFFICIAL_MAP_LAYERS = OFFICIAL_MAP_LAYERS;
 const REGULATIONS = [
   {id:"uu32-2009",level:"Nasional",scope:"Payung lingkungan",title:"UU 32 Tahun 2009 jo. UU 6 Tahun 2023",about:"Payung perlindungan dan pengelolaan lingkungan hidup, termasuk perubahan melalui rezim Cipta Kerja.",status:"Berlaku dengan perubahan",verified:true,checked:"21 Agu 2026",location:"Indonesia",province:"",url:"https://peraturan.bpk.go.id/Details/38771/uu-no-32-tahun-2009"},
   {id:"pp28-2025",level:"Nasional",scope:"Perizinan berusaha",title:"PP 28 Tahun 2025",about:"Penyelenggaraan Perizinan Berusaha Berbasis Risiko, termasuk persyaratan dasar, PB, PB UMKU, OSS, pengawasan, dan sanksi; mencabut PP 5 Tahun 2021.",status:"Berlaku",verified:true,checked:"23 Agu 2026",location:"Indonesia",province:"",url:"https://peraturan.go.id/id/pp-no-28-tahun-2025"},
@@ -744,7 +750,7 @@ const DEFAULT_STATE = {
   answers:{fieldType:"Onshore",injection:"Belum ditentukan"},wasteCodes:["b105d","b110d"],showAllImpacts:false,showAllWaste:false,
   legalPurpose:"business",legalOwners:"",legalUmk:"",
   province:"Kalimantan Timur",regency:"Kabupaten Kutai Kartanegara",locationFlags:[],openTask:0,
-  taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false},polygon:null,calendarEvents:[]
+  taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false},polygon:null,calendarEvents:[],mapLayerPreferences:{}
 };
 
 const STORAGE_KEY="envirotrack-state-v2";
@@ -821,7 +827,7 @@ function readStoredState(){
 let state = loadState();
 let lastRenderedView=null;
 function createNewProjectState(){
-  return {...DEFAULT_STATE,view:"screening",step:0,kblis:[],projectName:"Proyek baru",projectStatus:"Usaha baru",stage:"Pra-konstruksi",capacity:"",capacityUnit:"",activities:[],impacts:[],answers:{},wasteCodes:[],showAllImpacts:false,showAllWaste:false,legalPurpose:"business",legalOwners:"",legalUmk:"",locationFlags:[],openTask:0,taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false}};
+  return {...DEFAULT_STATE,view:"screening",step:0,kblis:[],projectName:"Proyek baru",projectStatus:"Usaha baru",stage:"Pra-konstruksi",capacity:"",capacityUnit:"",activities:[],impacts:[],answers:{},wasteCodes:[],showAllImpacts:false,showAllWaste:false,legalPurpose:"business",legalOwners:"",legalUmk:"",locationFlags:[],openTask:0,taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false},mapLayerPreferences:{}};
 }
 let entryGateTrigger=null;
 let entryCloseTimer=null;
@@ -999,6 +1005,10 @@ async function parsePolygonFile(file){
   return {name:file.name,format,points,bounds:polygonBounds(points),updatedAt:new Date().toISOString()};
 }
 async function importPolygonFile(file){try{state.polygon=await parsePolygonFile(file);saveState();renderView();showToast(`${state.polygon.format} tersimpan: ${state.polygon.points.length} titik polygon.`);}catch(error){showToast(error?.message||"Polygon tidak dapat dibaca. Gunakan GeoJSON Polygon atau KML yang valid.");}}
+function mapLayerPreference(id){return state.mapLayerPreferences?.[id]||{};}
+function officialLayerCatalogMarkup(){
+  return `<section class="official-layer-catalog"><div class="official-layer-head"><div><span class="kicker">KATALOG LAYER RESMI</span><h3>Overlay tata ruang & kawasan sensitif</h3><p>Layer hanya aktif setelah endpoint WMS, nama layer, sumber, dan metadata dikonfirmasi dari walidata resmi.</p></div><span class="catalog-status">${window.ENVIRO_OFFICIAL_MAP_LAYERS.filter(layer=>layer.endpoint&&layer.layerName).length}/${window.ENVIRO_OFFICIAL_MAP_LAYERS.length} siap</span></div><div class="official-layer-list">${window.ENVIRO_OFFICIAL_MAP_LAYERS.map(layer=>{const ready=Boolean(layer.endpoint&&layer.layerName),pref=mapLayerPreference(layer.id),opacity=Math.round(Number(pref.opacity??.55)*100);return `<article class="official-layer-row ${ready?"is-ready":"is-pending"}"><div class="official-layer-copy"><b>${esc(layer.title)}</b><small>${esc(layer.scope)} · ${esc(layer.serviceType)} · ${esc(layer.publisher)}</small><span>${ready?`Versi/metadata perlu ditampilkan dari konfigurasi layer.`:`Belum dikonfigurasi — tidak ada request WMS yang dikirim.`}</span><a href="${esc(layer.officialUrl)}" target="_blank" rel="noopener noreferrer">Buka portal sumber ↗</a></div><div class="official-layer-controls">${ready?`<label class="layer-toggle"><input type="checkbox" data-wms-toggle="${esc(layer.id)}" ${pref.visible??layer.defaultVisible?"checked":""}> tampil</label><label class="layer-opacity">opacity <output data-wms-value="${esc(layer.id)}">${opacity}%</output><input type="range" min="10" max="90" step="5" value="${opacity}" data-wms-opacity="${esc(layer.id)}"></label>`:`<span class="layer-status-pending">ENDPOINT BELUM DIKONFIRMASI</span>`}</div></article>`;}).join("")}</div><p class="official-layer-note">Jangan memasukkan endpoint hasil scraping atau endpoint tanpa izin. Setiap layer harus memiliki dasar hukum, CRS, tanggal data, penerbit, lisensi, dan tanggal terakhir dicek.</p></section>`;
+}
 function initSiteMap(){
   const mapElement=document.getElementById("site-map");if(!mapElement)return;
   if(siteMap){siteMap.remove();siteMap=null;}
@@ -1009,6 +1019,13 @@ function initSiteMap(){
   const overlays={};
   if(points.length>=3){const layer=window.L.polygon(points,{color:"#236b53",weight:3,fillColor:"#71ad8f",fillOpacity:.32});layer.addTo(siteMap);layer.bindPopup("Polygon tapak tersimpan lokal. Overlay resmi tetap perlu dikonfirmasi dengan sumber tata ruang yang berlaku.");overlays["Polygon tapak"]=layer;siteMap.fitBounds(layer.getBounds(),{padding:[24,24]});}
   else siteMap.setView([-0.5,117],6);
+  siteMap._enviroOfficialLayers={};
+  window.ENVIRO_OFFICIAL_MAP_LAYERS.filter(layer=>layer.endpoint&&layer.layerName).forEach(definition=>{
+    const pref=mapLayerPreference(definition.id),layer=window.L.tileLayer.wms(definition.endpoint,{layers:definition.layerName,format:"image/png",transparent:true,version:"1.3.0",opacity:Number(pref.opacity??.55),attribution:esc(definition.publisher)});
+    siteMap._enviroOfficialLayers[definition.id]=layer;overlays[definition.title]=layer;
+    layer.on("tileerror",()=>showToast(`${definition.title}: tile tidak dapat dimuat. Periksa endpoint atau status layanan resmi.`));
+    if(pref.visible??definition.defaultVisible)layer.addTo(siteMap);
+  });
   window.L.control.layers({"OpenStreetMap":base},overlays,{collapsed:false,position:"topright"}).addTo(siteMap);
   document.getElementById("site-map-status")?.remove();
   setTimeout(()=>siteMap?.invalidateSize(),80);
@@ -1019,7 +1036,7 @@ function renderLocation(){
   const polygon=state.polygon,polygonLabel=polygon?`${esc(polygon.name)} · ${polygon.points.length} titik` : "Polygon belum diunggah",polygonNote=polygon?`${polygon.format} tersimpan lokal · diperbarui ${new Intl.DateTimeFormat("id-ID",{day:"2-digit",month:"short",year:"numeric"}).format(new Date(polygon.updatedAt))}`:"GeoJSON Polygon atau KML · diproses di browser tanpa backend";
   return heading(3,"Tentukan tapak dan kewenangan","Lokasi memicu overlay tata ruang, kawasan sensitif, pembagian kewenangan, serta regulasi provinsi dan kabupaten/kota")+
   `<input class="hide" id="polygon-file-input" type="file" accept=".geojson,.json,.kml,application/geo+json,application/json,text/xml"><div class="site-map-card"><div class="site-map-head"><div><span class="kicker">PETA TAPAK & LAYER</span><b>${polygonLabel}</b><small>${polygonNote}</small></div><span class="map-source-badge">OSM</span></div><div class="site-map" id="site-map"><div class="site-map-status" id="site-map-status">Memuat peta dasar OpenStreetMap…</div></div><div class="site-map-foot"><span>Layer dasar: OpenStreetMap · layer polygon: ${polygon?"aktif":"belum tersedia"}</span><a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Laporkan masalah peta</a></div></div><div class="mapbox mapbox-summary"><b>${polygonLabel}</b><small>${polygonNote}</small><div class="map-actions"><button type="button" class="primary" data-action="upload-polygon">${polygon?"Ganti polygon":"Unggah polygon"}</button>${polygon?'<button type="button" class="soft" data-action="remove-polygon">Hapus</button>':""}</div></div>
-  <section class="location-recommendation"><div><span class="kicker">REKOMENDASI POLYGON</span><h3>Jadikan polygon sebagai sumber lokasi utama.</h3><p>Gunakan peta untuk memeriksa bentuk dan posisi tapak, lalu validasi sistem koordinat, luas, status lahan, serta overlay RTR/RDTR, hutan, konservasi, gambut, karst, pesisir, sempadan, dan batas administrasi dari sumber resmi. Peta OSM di sini adalah basemap, bukan bukti kesesuaian ruang.</p></div><div class="recommendation-tags"><span>EPSG:4326</span><span>Validasi luas</span><span>Overlay resmi</span></div></section>
+  ${officialLayerCatalogMarkup()}<section class="location-recommendation"><div><span class="kicker">REKOMENDASI POLYGON</span><h3>Jadikan polygon sebagai sumber lokasi utama.</h3><p>Gunakan peta untuk memeriksa bentuk dan posisi tapak, lalu validasi sistem koordinat, luas, status lahan, serta overlay RTR/RDTR, hutan, konservasi, gambut, karst, pesisir, sempadan, dan batas administrasi dari sumber resmi. Peta OSM di sini adalah basemap, bukan bukti kesesuaian ruang.</p></div><div class="recommendation-tags"><span>EPSG:4326</span><span>Validasi luas</span><span>Overlay resmi</span></div></section>
   <div class="form-row"><label class="form-field">Provinsi<select data-field="province">${PROVINCES.map(x=>`<option ${state.province===x?"selected":""}>${x}</option>`).join("")}</select><small>38 provinsi Indonesia tersedia</small></label><label class="form-field">Kabupaten / kota${regencyField}<small>${regs.length?`${regs.length} wilayah tersedia di provinsi ini`:"Periksa data provinsi"}</small></label></div>
   <div class="checks">${[["estate","Berada di kawasan industri"],["forest-cross","Beririsan kawasan hutan"],["marine-cross","Memakai ruang laut/pesisir"],["cross-admin","Lintas kabupaten/provinsi"],["protected","Dekat kawasan lindung/konservasi"],["river-buffer","Berada dekat sempadan sungai/danau"]].map(([key,label])=>`<label><input type="checkbox" data-location="${key}" ${state.locationFlags.includes(key)?"checked":""}> ${label}</label>`).join("")}</div>
   <div class="smart"><span>i</span><div><b>Lapisan daerah</b><p>${state.province==="Kalimantan Timur"?"Pilot regulasi daerah tersedia untuk Provinsi Kalimantan Timur, Kota Balikpapan, dan Kabupaten Kutai Kartanegara.":"Regulasi lokal daerah ini belum dipetakan di prototipe. Tracker akan menambahkan tugas verifikasi JDIH dan PTSP setempat."} Daftar 514 kabupaten/kota mengikuti Kepmendagri 300.2.2-2430 Tahun 2025.</p>${officialLink(LINKS.wilayahRef,"Buka sumber wilayah")}</div></div>`;
@@ -1431,6 +1448,7 @@ document.addEventListener("input",e=>{
   if(e.target.id==="kbli-search"){clearTimeout(searchTimer);searchTimer=setTimeout(()=>searchKbli(e.target.value),350);}
   if(e.target.id==="reg-search"){state.regSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
   if(e.target.id==="doc-search"){state.docSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
+  if(e.target.matches("[data-wms-toggle]")){const id=e.target.dataset.wmsToggle,checked=e.target.checked,statePref=state.mapLayerPreferences?.[id]||{};state.mapLayerPreferences={...(state.mapLayerPreferences||{}),[id]:{...statePref,visible:checked}};if(checked)siteMap?._enviroOfficialLayers?.[id]?.addTo(siteMap);else if(siteMap?._enviroOfficialLayers?.[id])siteMap.removeLayer(siteMap._enviroOfficialLayers[id]);saveState();return;}
   if(e.target.matches("[data-field][type='text'],[data-field]:not(select)")){state[e.target.dataset.field]=e.target.value;saveState();}
   if(e.target.matches("input[data-answer]")){state.answers[e.target.dataset.answer]=e.target.value;saveState();}
 });
@@ -1442,6 +1460,7 @@ document.addEventListener("change",e=>{
     state.taskProgress[taskProgressKey(id)]={status,done};saveState();renderView();if(done.length===total)showToast(hasEvidence?"Semua langkah dan bukti tugas sudah lengkap.":"Semua langkah selesai. Tambahkan bukti agar tugas selesai.");return;
   }
   if(e.target.id==="polygon-file-input"){const file=e.target.files?.[0];if(file)importPolygonFile(file);e.target.value="";return;}
+  if(e.target.matches("[data-wms-opacity]")){const id=e.target.dataset.wmsOpacity,value=Number(e.target.value)/100;state.mapLayerPreferences={...(state.mapLayerPreferences||{}),[id]:{...(state.mapLayerPreferences?.[id]||{}),opacity:value}};const output=document.querySelector(`[data-wms-value="${CSS.escape(id)}"]`);if(output)output.value=`${Math.round(value*100)}%`;siteMap?._enviroOfficialLayers?.[id]?.setOpacity(value);saveState();return;}
   if(e.target.id==="doc-file-input"){
     const files=[...e.target.files||[]];if(!files.length)return;
     const task=state.documentTask?buildTasks().find(x=>x.id===state.documentTask):null;
