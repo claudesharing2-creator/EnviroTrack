@@ -1035,3 +1035,22 @@ body.public-mode .app{display:none}
   .stage-description{max-width:480px;margin-top:19px}
 }
 @media(max-width:850px){.stage-copy h1{white-space:normal}}
+
+
+/* Zoom-safe layout: let hero content define card height instead of clipping absolute content */
+.stage-card{display:flex;flex-direction:column;align-items:stretch;height:auto;min-height:clamp(640px,calc(100dvh - 164px),730px)}
+.stage-copy{position:relative;inset:auto;transform:none;width:auto;max-width:none;margin-top:auto;margin-left:clamp(25px,8vw,118px);margin-right:clamp(110px,17vw,220px);padding:150px 0 92px;z-index:1}
+.stage-copy h1{max-width:900px;white-space:normal}
+@media (min-width:851px){.stage-copy h1{font-size:clamp(56px,7.7vw,118px);line-height:.82}}
+@media (max-width:850px){.stage-card{min-height:clamp(610px,calc(100dvh - 126px),760px)}.stage-copy{margin-left:30px;margin-right:58px;padding:145px 0 82px}.stage-copy h1{white-space:normal}}
+@media (max-width:560px){.stage-card{min-height:clamp(610px,calc(100dvh - 94px),760px)}.stage-copy{margin-left:22px;margin-right:42px;padding:138px 0 74px}.stage-copy h1{font-size:clamp(49px,15.4vw,70px);line-height:.86}}
+
+
+/* Compact zoomed desktop: fit the complete hero lockup into the reduced CSS viewport */
+@media (min-width:851px) and (max-height:720px){
+  .stage-card{min-height:clamp(520px,calc(100dvh - 126px),640px)}
+  .stage-copy{margin-left:clamp(25px,8vw,110px);margin-right:clamp(95px,15vw,180px);padding:100px 0 72px}
+  .stage-copy h1{font-size:clamp(44px,10vh,76px);line-height:.84}
+  .stage-description{max-width:450px;margin-top:18px;font-size:12px;line-height:1.45}
+  .stage-actions{margin-top:15px}
+}
