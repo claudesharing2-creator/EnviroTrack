@@ -748,6 +748,10 @@ const DEFAULT_STATE = {
 };
 
 let state = loadState();
+function createNewProjectState(){
+  return {...DEFAULT_STATE,view:"screening",step:0,kblis:[],projectName:"Proyek baru",projectStatus:"Usaha baru",stage:"Pra-konstruksi",capacity:"",capacityUnit:"",activities:[],impacts:[],answers:{},wasteCodes:[],showAllImpacts:false,legalPurpose:"business",legalOwners:"",legalUmk:"",locationFlags:[],openTask:0,taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua"};
+}
+function setPublicMode(isPublic){document.body.classList.toggle("public-mode",isPublic);document.getElementById("public-landing")?.setAttribute("aria-hidden",String(!isPublic));document.getElementById("main-content")?.setAttribute("aria-hidden",String(isPublic));}
 let searchTimer = null;
 let toastTimer = null;
 
@@ -1190,7 +1194,7 @@ function renderHome(){
     <section class="reference-section"><div class="reference-head"><div><h3>Sistem resmi sesuai fase</h3><p>Baca kegunaannya sebelum membuka tautan; portal hanya dibuka ketika prasyaratnya sudah siap.</p></div><div class="carousel-controls"><button data-action="reference-prev" aria-label="Referensi sebelumnya">Sebelumnya</button><button data-action="reference-next" aria-label="Referensi berikutnya">Berikutnya</button></div></div><div class="reference-track" id="reference-track">${references}</div></section>
 
     <section class="landing-cta motion-reveal"><div><h3>Mulai dengan data kegiatanmu.</h3><p>Masukkan status usaha, semua KBLI, kapasitas, proses, dan lokasi. Hasilnya menjadi tracker tugas yang bisa dicentang, dilewati bila sudah dilakukan, serta dihubungkan dengan dokumen bukti.</p></div><button class="primary hero-primary" data-view="screening" data-step="0">Buat tracker proyek</button></section>
-    <p class="landing-disclaimer">EnviroTrack adalah alat bantu penapisan dan pengelolaan pekerjaan, bukan keputusan hukum atau izin resmi. Konfirmasi keluaran kepada AHU, DJP, OSS, ATR/BPN, DPMPTSP atau OPD, AMDALNet, kementerian atau lembaga, dan sumber regulasi resmi.</p><p class="creator-credit">Dibuat oleh <strong>Rizky Bakti Caturraga</strong></p>
+    <p class="landing-disclaimer">EnviroTrack adalah alat bantu penapisan dan pengelolaan pekerjaan, bukan keputusan hukum atau izin resmi. Konfirmasi keluaran kepada AHU, DJP, OSS, ATR/BPN, DPMPTSP atau OPD, AMDALNet, kementerian atau lembaga, dan sumber regulasi resmi.</p>
   </div>`;
 }
 
@@ -1205,6 +1209,7 @@ function initMotion(){
 }
 
 function renderView(){
+  setPublicMode(false);
   const screening=state.view==="screening";
   document.getElementById("stepbar").classList.toggle("hide",!screening);
   document.getElementById("panel-footer")?.classList.toggle("hide",!screening);
@@ -1342,7 +1347,15 @@ document.addEventListener("change",e=>{
   if(e.target.matches("[data-location]")){const k=e.target.dataset.location;state.locationFlags=e.target.checked?[...new Set([...state.locationFlags,k])]:state.locationFlags.filter(x=>x!==k);saveState();}
 });
 document.addEventListener("click",e=>{
-  const viewEl=e.target.closest("[data-view]");if(viewEl){e.preventDefault();state.view=viewEl.dataset.view;if(state.view==="documents")state.documentTask=null;if(state.view==="regulations")state.regMode=viewEl.dataset.regOpen||"all";if(viewEl.dataset.step!==undefined)state.step=+viewEl.dataset.step;renderView();return;}
+  const publicAction=e.target.closest("[data-public-action]");
+  if(publicAction){
+    e.preventDefault();
+    if(publicAction.dataset.publicAction==="open-screening"){state=createNewProjectState();renderView();return;}
+    if(publicAction.dataset.publicAction==="open-regulations"){state.view="regulations";state.regMode="all";renderView();return;}
+    if(publicAction.dataset.publicAction==="open-landing"){setPublicMode(true);history.replaceState(null,"",location.pathname);return;}
+  }
+  const directAction=e.target.closest("[data-action]");if(directAction?.dataset.action==="new-project"){e.preventDefault();state=createNewProjectState();renderView();return;}
+  const viewEl=e.target.closest("[data-view]");if(viewEl){e.preventDefault();if(viewEl.dataset.view==="screening"){state=createNewProjectState();if(viewEl.dataset.step!==undefined)state.step=+viewEl.dataset.step;}else{state.view=viewEl.dataset.view;if(state.view==="documents")state.documentTask=null;if(state.view==="regulations")state.regMode=viewEl.dataset.regOpen||"all";if(viewEl.dataset.step!==undefined)state.step=+viewEl.dataset.step;}renderView();return;}
   const step=e.target.closest("[data-step]");if(step){state.view="screening";state.step=+step.dataset.step;renderView();return;}
   const result=e.target.closest("[data-kbli-code]");if(result){addKbli({id:result.dataset.kbliId,code:result.dataset.kbliCode,title:result.dataset.kbliTitle,description:result.dataset.kbliDescription});return;}
   const activity=e.target.closest("[data-activity]");if(activity){const k=activity.dataset.activity,adding=!state.activities.includes(k);state.activities=adding?[...state.activities,k]:state.activities.filter(x=>x!==k);if(adding){const triggers=ACTIVITY_TRIGGERS[k]||[];addTriggeredImpacts(triggers);if(triggers.includes("usedoil"))addWasteCodes(["b105d","b110d"]);if(triggers.includes("chemical")||triggers.includes("packaging"))addWasteCodes(["b104d"]);if(triggers.includes("battery"))addWasteCodes(["a102d","b107d"]);}saveState();renderView();return;}
@@ -1372,7 +1385,7 @@ document.addEventListener("click",e=>{
   if(a==="manage-evidence"){state.documentTask=action.dataset.id;state.docProject=state.projectName;state.docFilter="Semua";state.docSearch="";state.view="documents";renderView();}
   if(a==="back-to-task"||a==="open-linked-task"){state.openTask=action.dataset.id;state.documentTask=null;state.view="tasks";renderView();}
   if(a==="show-all-docs"){state.documentTask=null;state.docProject=state.projectName;state.docFilter="Semua";state.docSearch="";renderView();}
-  if(a==="new-project"){state.view="screening";state.step=0;renderView();}
+  if(a==="new-project"){state=createNewProjectState();renderView();}
   if(a==="open-project"){const p=demoProjects[+action.dataset.index];state.projectName=p.name;state.docProject=p.name;state.view="screening";state.step=4;renderView();}
   if(a==="upload-doc")document.getElementById("doc-file-input")?.click();
   if(a==="doc-menu")showToast("Aksi dokumen: pratinjau, ganti versi, tautkan ke tugas, atau arsipkan.");
@@ -1387,10 +1400,14 @@ document.addEventListener("click",e=>{
 document.addEventListener("click",e=>{if(!e.target.closest(".search-wrap")){document.getElementById("kbli-suggestions")?.classList.add("hide");}});
 window.addEventListener("hashchange",()=>{
   const map={"#beranda":"home","#penapisan":"screening","#proyek":"projects","#tugas":"tasks","#dokumen":"documents","#kalender":"calendar","#regulasi":"regulations"};
-  const v=map[location.hash];if(v&&v!==state.view){state.view=v;renderView();}
+  const v=map[location.hash];
+  if(location.hash==="#beranda"){setPublicMode(true);return;}
+  if(v){setPublicMode(false);if(v!==state.view){state.view=v;renderView();}}
 });
 document.addEventListener("DOMContentLoaded",()=>{
-  const map={"#beranda":"home","#penapisan":"screening","#proyek":"projects","#tugas":"tasks","#dokumen":"documents","#kalender":"calendar","#regulasi":"regulations"};state.view=map[location.hash]||"home";
+  const map={"#beranda":"home","#penapisan":"screening","#proyek":"projects","#tugas":"tasks","#dokumen":"documents","#kalender":"calendar","#regulasi":"regulations"};
+  if(!location.hash||location.hash==="#top"||location.hash==="#beranda"||location.hash.startsWith("#public-")){setPublicMode(true);return;}
+  state.view=map[location.hash]||"home";
   renderView();
 });
 document.addEventListener("click",e=>{
