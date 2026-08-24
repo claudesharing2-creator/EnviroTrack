@@ -1617,9 +1617,9 @@ function applyAnswerTriggers(id,value){
   if(id==="facilityType"&&value==="Pengelolaan sampah")addTriggeredImpacts(["leachate","odor","residue"]);
 }
 function setKbli(data){
-  state.kblis=[data];const profile=profileForCode(data.code);
-  state.activities=profile.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.impacts=[...profile.defaults];state.wasteCodes=profile===QUESTIONNAIRE_PROFILES.migas?["b105d","b110d"]:[];state.showAllImpacts=false;
-  state.projectName=data.title;state.manualKbliCode="";state.manualKbliTitle="";saveState();renderView();showToast(`KBLI ${data.code} dipilih. Pertanyaan, satuan, dampak, dan kandidat limbah sudah disesuaikan.`);
+  state.kblis=[data];const profile=profileForCode(data.code),specific=kbliActivityProfile(data);
+  state.activities=specific.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.impacts=[...specific.defaults];state.wasteCodes=[...new Set(specific.waste||[])];state.showAllImpacts=false;
+  state.projectName=data.title;state.manualKbliCode="";state.manualKbliTitle="";saveState();renderView();showToast(`KBLI ${data.code} disimpan. Periksa kembali pertanyaan, dampak, dan kandidat limbah.`);
 }
 function addKbli(data){
   const code=String(data?.code||"");
