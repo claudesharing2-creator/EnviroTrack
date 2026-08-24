@@ -802,7 +802,7 @@ const DEFAULT_STATE = {
   answers:{fieldType:"Onshore",injection:"Belum ditentukan"},wasteCodes:["b105d","b110d"],showAllImpacts:false,showAllWaste:false,
   legalPurpose:"business",legalOwners:"",legalUmk:"",
   province:"Kalimantan Timur",regency:"Kabupaten Kutai Kartanegara",locationFlags:[],openTask:0,
-  taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false},polygon:null,calendarEvents:[],masterB3Search:"",masterB3Kind:"lb3",masterB3Selected:[],masterLB3Selected:[],mapLayerPreferences:{},mapCatalogOpen:false,mapCatalogScope:"all",mapCatalogStatus:"all",mapCatalogCoverage:"all",complianceReview:{...DEFAULT_COMPLIANCE_REVIEW},obligationRegister:[]
+  taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false},polygon:null,calendarEvents:[],masterB3Search:"",masterB3Kind:"lb3",masterB3Selected:[],masterLB3Selected:[],mapLayerPreferences:{},mapCatalogOpen:false,mapCatalogScope:"all",mapCatalogStatus:"all",mapCatalogCoverage:"all",complianceReview:{...DEFAULT_COMPLIANCE_REVIEW},obligationRegister:[],amdalStudy:{activePhase:0,teamReady:false,knowledgeChecked:false}
 };
 
 const STORAGE_KEY="envirotrack-state-v2";
@@ -871,6 +871,9 @@ function normalizeState(saved){
   merged.complianceReview.changeLog=Array.isArray(merged.complianceReview.changeLog)?merged.complianceReview.changeLog:[];
   merged.complianceReview.officialDocumentStatus=merged.complianceReview.officialDocumentStatus||"Belum dikonfirmasi";merged.complianceReview.authorityStatus=merged.complianceReview.authorityStatus||"Belum dikonfirmasi";merged.complianceReview.reScreenRequired=merged.complianceReview.reScreenRequired===true;
   merged.obligationRegister=Array.isArray(saved?.obligationRegister)?saved.obligationRegister:[];
+  merged.amdalStudy={activePhase:0,teamReady:false,knowledgeChecked:false,...(saved?.amdalStudy&&typeof saved.amdalStudy==="object"?saved.amdalStudy:{})};
+  if(!Number.isInteger(merged.amdalStudy.activePhase)||merged.amdalStudy.activePhase<0||merged.amdalStudy.activePhase>4)merged.amdalStudy.activePhase=0;
+  merged.amdalStudy.teamReady=merged.amdalStudy.teamReady===true;merged.amdalStudy.knowledgeChecked=merged.amdalStudy.knowledgeChecked===true;
   if(!PROVINCES.includes(merged.province)){merged.province=DEFAULT_STATE.province;merged.regency=DEFAULT_STATE.regency;}
   const provinceRegencies=REGENCIES[merged.province];const knownOtherRegency=Object.entries(REGENCIES).some(([province,items])=>province!==merged.province&&items.includes(merged.regency));
   if(provinceRegencies&&!provinceRegencies.includes(merged.regency))merged.regency=provinceRegencies[0];if(!provinceRegencies&&knownOtherRegency)merged.regency="";
@@ -891,7 +894,7 @@ function readStoredState(){
 let state = loadState();
 let lastRenderedView=null;
 function createNewProjectState(){
-  return {...DEFAULT_STATE,view:"screening",step:0,kblis:[],projectName:"Proyek baru",projectStatus:"Usaha baru",stage:"Pra-konstruksi",capacity:"",capacityUnit:"",activities:[],impacts:[],answers:{},wasteCodes:[],showAllImpacts:false,showAllWaste:false,legalPurpose:"business",legalOwners:"",legalUmk:"",locationFlags:[],openTask:0,taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false},masterB3Search:"",masterB3Kind:"lb3",masterB3Selected:[],masterLB3Selected:[],mapLayerPreferences:{},mapCatalogOpen:false,mapCatalogScope:"all",mapCatalogStatus:"all",mapCatalogCoverage:"all",complianceReview:{...DEFAULT_COMPLIANCE_REVIEW},obligationRegister:[]};
+  return {...DEFAULT_STATE,view:"screening",step:0,kblis:[],projectName:"Proyek baru",projectStatus:"Usaha baru",stage:"Pra-konstruksi",capacity:"",capacityUnit:"",activities:[],impacts:[],answers:{},wasteCodes:[],showAllImpacts:false,showAllWaste:false,legalPurpose:"business",legalOwners:"",legalUmk:"",locationFlags:[],openTask:0,taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false},masterB3Search:"",masterB3Kind:"lb3",masterB3Selected:[],masterLB3Selected:[],mapLayerPreferences:{},mapCatalogOpen:false,mapCatalogScope:"all",mapCatalogStatus:"all",mapCatalogCoverage:"all",complianceReview:{...DEFAULT_COMPLIANCE_REVIEW},obligationRegister:[],amdalStudy:{activePhase:0,teamReady:false,knowledgeChecked:false}};
 }
 let entryGateTrigger=null;
 let entryCloseTimer=null;
@@ -1438,6 +1441,42 @@ const SYSTEM_REFERENCES=[
   {name:"SIMPEL",stage:"Setelah izin dan operasi",use:"Pemantauan serta pelaporan berkala. Modul PLB3 berada dalam ekosistem ini.",url:LINKS.simpel}
 ];
 
+const AMDAL_STUDY_PHASES=[
+  {n:"01",name:"Penapisan",summary:"Baca profil kegiatan, skala, lokasi, dan sumber dampak sebagai satu konteks.",anchor:"Data proyek"},
+  {n:"02",name:"Tim",summary:"Konfirmasi peran penyusun sebelum masuk ke pekerjaan dokumen.",anchor:"Kesiapan peran"},
+  {n:"03",name:"Dokumen",summary:"Hubungkan kebutuhan dokumen dengan hasil penapisan dan tracker bukti.",anchor:"Bukti awal"},
+  {n:"04",name:"Pemeriksaan",summary:"Pahami kapan sebuah catatan memerlukan perbaikan, klarifikasi, atau bukti tambahan.",anchor:"Tinjauan internal"},
+  {n:"05",name:"Keputusan",summary:"Tutup latihan dengan daftar hal yang tetap harus diverifikasi pada sumber resmi.",anchor:"Konfirmasi resmi"}
+];
+function renderAmdalStudy(){
+  const study=state.amdalStudy||{activePhase:0,teamReady:false,knowledgeChecked:false},project=selectedKbli(),phase=AMDAL_STUDY_PHASES[study.activePhase],documentHint=state.complianceReview?.officialDocumentType||"Belum ditetapkan",reviewStatus=state.complianceReview?.officialDocumentStatus||"Belum dikonfirmasi",contextItems=[
+    ["KBLI utama",project?`${project.code} · ${project.title}`:"Belum dipilih"],
+    ["Kapasitas",state.capacity?`${state.capacity} ${state.capacityUnit}`:"Belum diisi"],
+    ["Lokasi",state.regency?`${state.regency}, ${state.province}`:"Belum dipilih"],
+    ["Sumber dampak",state.impacts?.length?`${state.impacts.length} dipetakan`:"Belum dipetakan"]
+  ];
+  const phaseRail=AMDAL_STUDY_PHASES.map((item,index)=>`<button type="button" class="amdal-phase ${index===study.activePhase?"active":""} ${index<study.activePhase?"done":""}" data-amdal-phase="${index}"><span>${index<study.activePhase?"✓":item.n}</span><div><b>${item.name}</b><small>${item.anchor}</small></div></button>`).join("");
+  const projectRows=contextItems.map(([label,value])=>`<div><span>${esc(label)}</span><b>${esc(value)}</b></div>`).join("");
+  return `<div class="view-shell amdal-study-shell">
+    ${viewHeader("Studio AMDAL","Latihan proses dengan data proyek EnviroTrack yang tersimpan lokal. Ini bukan salinan atau pengganti layanan AMDALNet.",`<span class="amdal-mode-label">MODE LATIHAN · LOKAL</span>`)}
+    <section class="amdal-atlas">
+      <div class="amdal-atlas-copy"><p class="amdal-overline">JEJAK PROSES / ${phase.n}</p><h3>${esc(phase.name)}: ${esc(phase.summary)}</h3><p>Studio ini menambahkan layer belajar di atas alat penapisan EnviroTrack. Tidak ada data yang dikirim ke AMDALNet, OSS, maupun instansi.</p><div class="amdal-atlas-coordinates"><span>PROYEK</span><b>${esc(state.projectName||"Proyek baru")}</b><i></i><span>TAHAP</span><b>${esc(state.stage||"Pra-konstruksi")}</b></div></div>
+      <div class="amdal-atlas-route" aria-label="Progres pembelajaran">${AMDAL_STUDY_PHASES.map((item,index)=>`<div class="route-node ${index===study.activePhase?"current":""} ${index<study.activePhase?"passed":""}"><span>${item.n}</span><b>${item.name}</b></div>`).join("")}</div>
+    </section>
+    <div class="amdal-study-layout">
+      <section class="view-card amdal-phase-card"><div class="amdal-card-head"><div><p class="eyebrow">PETA LATIHAN</p><h3>Lima checkpoint yang dapat ditelusuri</h3></div><span>FASE ${String(study.activePhase+1).padStart(2,"0")}/05</span></div><div class="amdal-phase-list">${phaseRail}</div></section>
+      <aside class="view-card amdal-project-card"><p class="eyebrow">KONTEKS PROYEK AKTIF</p><h3>${esc(state.projectName||"Proyek baru")}</h3><div class="amdal-project-facts">${projectRows}</div><button type="button" class="soft amdal-open-screening" data-action="amdal-open-screening">Bandingkan di penapisan <span>→</span></button></aside>
+    </div>
+    <section class="amdal-workbench">
+      <div class="view-card amdal-task-card"><div class="amdal-card-head"><div><p class="eyebrow">CHECKPOINT ${phase.n}</p><h3>${esc(phase.name)}</h3></div><span class="amdal-registry">REG-${phase.n} · CONTOH</span></div>
+        ${study.activePhase===0?`<div class="amdal-lesson"><div class="amdal-question"><span>01</span><div><b>Apa yang harus dibaca bersama-sama?</b><p>Jenis kegiatan, skala, lokasi, dan sumber dampak tidak berdiri sendiri. Gunakan data proyek di kanan sebagai bahan awal, lalu kembali ke penapisan untuk melengkapinya.</p></div></div><div class="amdal-action-row"><button type="button" class="primary" data-action="amdal-open-screening">Buka data penapisan</button><span>Hasil latihan belum merupakan penetapan jenis dokumen.</span></div></div>`:study.activePhase===1?`<div class="amdal-lesson"><div class="amdal-question"><span>02</span><div><b>Apakah tim sudah siap untuk latihan?</b><p>Dalam workflow penyusunan, penugasan yang diterima menjadi checkpoint sebelum pekerjaan dokumen dimulai.</p></div></div><div class="amdal-team-switch"><div><b>${study.teamReady?"Penugasan latihan telah diterima":"Menunggu tanggapan anggota"}</b><small>${study.teamReady?"Checkpoint tim dicatat hanya di browser ini.":"Simulasikan penerimaan penugasan untuk membuka checkpoint berikutnya."}</small></div><button type="button" class="${study.teamReady?"soft":"primary"}" data-action="amdal-team">${study.teamReady?"Tandai belum siap":"Terima penugasan latihan"}</button></div></div>`:study.activePhase===2?`<div class="amdal-lesson"><div class="amdal-question"><span>03</span><div><b>Dokumen dibaca sebagai bukti proses.</b><p>Gunakan workspace Dokumen EnviroTrack untuk menyimpan bukti lokal dan menautkannya ke tracker tugas; jangan unggah materi sensitif untuk tujuan latihan.</p></div></div><div class="amdal-document-grid"><div><span>JENIS DOKUMEN</span><b>${esc(documentHint)}</b></div><div><span>STATUS RUJUKAN</span><b>${esc(reviewStatus)}</b></div><div><span>BUKTI LOKAL</span><b>${(state.documents||[]).length} berkas tercatat</b></div></div></div>`:study.activePhase===3?`<div class="amdal-lesson"><div class="amdal-question"><span>04</span><div><b>Catatan pemeriksaan bukan akhir jalur.</b><p>Bandingkan catatan, bukti, dan perubahan proyek. EnviroTrack sudah menandai kebutuhan penapisan ulang ketika parameter proyek berubah.</p></div></div><div class="amdal-review-note"><span>RE-SCREEN</span><b>${state.complianceReview?.reScreenRequired?"Perlu ditinjau ulang":"Belum ada penanda peninjauan ulang"}</b><small>${esc(state.complianceReview?.reScreenReason||"Masukkan atau ubah data proyek untuk mempelajari pemicu peninjauan.")}</small></div></div>`:`<div class="amdal-lesson"><div class="amdal-question"><span>05</span><div><b>Siapkan konfirmasi dari sumber resmi.</b><p>Simulator membantu menyusun pertanyaan dan bukti. Kewajiban nyata harus selalu diperiksa terhadap instansi berwenang dan rujukan regulasi terkini.</p></div></div><div class="amdal-action-row"><button type="button" class="soft" data-view="regulations" data-reg-open="all">Buka basis regulasi</button><a class="action-link" href="${LINKS.amdalnet}" target="_blank" rel="noopener noreferrer">Buka AMDALNet resmi ↗</a></div></div>`}
+      </div>
+      <aside class="view-card amdal-knowledge-card"><p class="eyebrow">CEK PEMAHAMAN</p><h3>Checkpoint tim</h3><p>Sebelum dokumen dibuka dalam latihan, apa fungsi tanggapan penugasan?</p><div class="amdal-answer-options"><button type="button" data-amdal-check="false">Merapikan tampilan dashboard</button><button type="button" data-amdal-check="true">Mencatat kesiapan peran dan tanggung jawab</button><button type="button" data-amdal-check="false">Menerbitkan hasil persetujuan</button></div>${study.knowledgeChecked?`<div class="amdal-feedback">✓ Tepat. Kesiapan peran adalah checkpoint proses, bukan sekadar informasi tampilan.</div>`:""}</aside>
+    </section>
+    <p class="amdal-disclaimer">Studio AMDAL menggunakan konteks proyek EnviroTrack yang tersimpan di perangkat. Semua status, contoh registri, dan latihan bersifat simulasi.</p>
+  </div>`;
+}
+
 function renderHome(){
   const phasePanels=FLOW_PHASES.map((phase,index)=>{
     const items=PERMIT_FLOW.filter(item=>item.phase===phase);
@@ -1484,15 +1523,15 @@ function renderView(){
   const screening=state.view==="screening";
   document.getElementById("stepbar").classList.toggle("hide",!screening);
   document.getElementById("panel-footer")?.classList.toggle("hide",!screening);
-  const titles={home:"Overview perizinan",screening:state.step===4?"Tracker proyek":"Proyek baru",projects:"Proyek saya",tasks:"Checklist tugas",documents:"Dokumen",calendar:"Kalender",regulations:"Basis regulasi"};
+  const titles={home:"Overview perizinan",screening:state.step===4?"Tracker proyek":"Proyek baru","amdal-study":"Studio AMDAL",projects:"Proyek saya",tasks:"Checklist tugas",documents:"Dokumen",calendar:"Kalender",regulations:"Basis regulasi"};
   document.getElementById("page-title").textContent=titles[state.view];
   document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===state.view&&b.closest(".nav")));
   const content=document.getElementById("content");
   if(screening){content.innerHTML=`<section class="panel"><div class="screen" id="screen"></div><footer class="panel-footer" id="panel-footer"><button type="button" class="back" id="back">← Kembali</button><span class="note">Hasil menyesuaikan data yang kamu masukkan</span><button type="button" class="next" id="next">Lanjutkan <span>→</span></button></footer></section><aside class="context" id="context" aria-label="Ringkasan proyek"></aside>`;renderScreening();}
-  else{content.className="content full";content.innerHTML={home:renderHome,projects:renderProjects,tasks:renderAllTasks,documents:renderDocuments,calendar:renderCalendar,regulations:renderRegulations}[state.view]();}
+  else{content.className="content full";content.innerHTML={home:renderHome,"amdal-study":renderAmdalStudy,projects:renderProjects,tasks:renderAllTasks,documents:renderDocuments,calendar:renderCalendar,regulations:renderRegulations}[state.view]();}
   content.classList.remove("page-enter-active","page-enter","view-transition-in");if(shouldTransition){void content.offsetWidth;content.classList.add("view-transition-in");}initMotion();
   document.getElementById("task-count").textContent=buildTasks().length;
-  history.replaceState(null,"",`#${{home:"beranda",screening:"penapisan",projects:"proyek",tasks:"tugas",documents:"dokumen",calendar:"kalender",regulations:"regulasi"}[state.view]}`);
+  history.replaceState(null,"",`#${{home:"beranda",screening:"penapisan","amdal-study":"studio-amdal",projects:"proyek",tasks:"tugas",documents:"dokumen",calendar:"kalender",regulations:"regulasi"}[state.view]}`);
   saveState();
 }
 
@@ -1653,6 +1692,8 @@ document.addEventListener("click",e=>{
   const entryAction=e.target.closest("[data-entry-action]");if(entryAction){const actionName=entryAction.dataset.entryAction;if(actionName==="close"){closeEntryGate();return;}if(actionName==="new"){startNewFromEntry();return;}if(actionName==="resume"){resumeFromEntry();return;}if(actionName==="empty"){emptyWorkspaceFromEntry();return;}if(actionName==="load-state"){document.getElementById("entry-state-input")?.click();return;}if(actionName==="load-zip"){document.getElementById("entry-workspace-input")?.click();return;}}
   const directAction=e.target.closest("[data-action]");if(directAction?.dataset.action==="new-project"){e.preventDefault();state=createNewProjectState();renderView();return;}
   const viewEl=e.target.closest("[data-view]");if(viewEl){e.preventDefault();if(viewEl.dataset.view==="screening"){state=createNewProjectState();if(viewEl.dataset.step!==undefined)state.step=+viewEl.dataset.step;}else{state.view=viewEl.dataset.view;if(state.view==="documents")state.documentTask=null;if(state.view==="regulations")state.regMode=viewEl.dataset.regOpen||"all";if(viewEl.dataset.step!==undefined)state.step=+viewEl.dataset.step;}renderView();return;}
+  const amdalPhase=e.target.closest("[data-amdal-phase]");if(amdalPhase){state.amdalStudy={...(state.amdalStudy||{}),activePhase:+amdalPhase.dataset.amdalPhase};saveState();renderView();return;}
+  const amdalCheck=e.target.closest("[data-amdal-check]");if(amdalCheck){if(amdalCheck.dataset.amdalCheck==="true"){state.amdalStudy={...(state.amdalStudy||{}),knowledgeChecked:true};saveState();renderView();showToast("Tepat. Kesiapan peran adalah checkpoint proses.");}else showToast("Coba lagi. Fokus pada kesiapan peran dan tanggung jawab.");return;}
   const step=e.target.closest("[data-step]");if(step){state.view="screening";state.step=+step.dataset.step;renderView();scrollWorkspaceTop();return;}
   const result=e.target.closest("[data-kbli-code]");if(result){addKbli({id:result.dataset.kbliId,code:result.dataset.kbliCode,title:result.dataset.kbliTitle,description:result.dataset.kbliDescription});return;}
   const activity=e.target.closest("[data-activity]");if(activity){const k=activity.dataset.activity,adding=!state.activities.includes(k);state.activities=adding?[...state.activities,k]:state.activities.filter(x=>x!==k);markNeedsRescreen("Tahapan/aktivitas proyek berubah");if(adding){const triggers=ACTIVITY_TRIGGERS[k]||[];addTriggeredImpacts(triggers);if(triggers.includes("usedoil"))addWasteCodes(["b105d","b110d"]);if(triggers.includes("chemical")||triggers.includes("packaging"))addWasteCodes(["b104d"]);if(triggers.includes("battery"))addWasteCodes(["a102d","b107d"]);}saveState();renderView();return;}
@@ -1664,6 +1705,8 @@ document.addEventListener("click",e=>{
   const action=e.target.closest("[data-action]");if(!action)return;
   const a=action.dataset.action;
   if(a==="save")saveState(false);
+  if(a==="amdal-open-screening"){state.view="screening";state.step=2;renderView();scrollWorkspaceTop();return;}
+  if(a==="amdal-team"){const teamReady=!(state.amdalStudy?.teamReady===true);state.amdalStudy={...(state.amdalStudy||{}),teamReady};saveState();renderView();showToast(teamReady?"Penugasan latihan diterima. Kesiapan tim dicatat lokal.":"Penugasan latihan dikembalikan ke status belum siap.");return;}
   if(a==="toggle-all-impacts"){state.showAllImpacts=!state.showAllImpacts;renderView();return;}
   if(a==="toggle-all-waste"){state.showAllWaste=!state.showAllWaste;renderView();return;}
   if(a==="remove-kbli")removeKbli(action.dataset.code);
@@ -1708,13 +1751,13 @@ document.addEventListener("click",e=>{
 });
 
 window.addEventListener("hashchange",()=>{
-  const map={"#beranda":"home","#penapisan":"screening","#proyek":"projects","#tugas":"tasks","#dokumen":"documents","#kalender":"calendar","#regulasi":"regulations"};
+  const map={"#beranda":"home","#penapisan":"screening","#studio-amdal":"amdal-study","#proyek":"projects","#tugas":"tasks","#dokumen":"documents","#kalender":"calendar","#regulasi":"regulations"};
   const v=map[location.hash];
   if(location.hash==="#beranda"){setPublicMode(true);return;}
   if(v){setPublicMode(false);if(v!==state.view){state.view=v;renderView();}}
 });
 document.addEventListener("DOMContentLoaded",()=>{
-  const map={"#beranda":"home","#penapisan":"screening","#proyek":"projects","#tugas":"tasks","#dokumen":"documents","#kalender":"calendar","#regulasi":"regulations"};
+  const map={"#beranda":"home","#penapisan":"screening","#studio-amdal":"amdal-study","#proyek":"projects","#tugas":"tasks","#dokumen":"documents","#kalender":"calendar","#regulasi":"regulations"};
   if(!location.hash||location.hash==="#top"||location.hash==="#beranda"||location.hash.startsWith("#public-")){setPublicMode(true);restoreDocumentDirectory();return;}
   state.view=map[location.hash]||"home";
   renderView();
