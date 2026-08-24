@@ -1053,7 +1053,7 @@ function renderProfile(){
   ${selectedCard}
   ${k?`<div class="kbli-correlation"><b>Hubungan KBLI</b><p><strong>KBLI ${esc(k.code)}</strong> menjadi konteks awal. Centang hanya proses yang benar-benar dilakukan; pilihan ini dipakai pada langkah sumber dampak dan dokumen.</p></div>`:""}
   ${state.kblis.length>1?`<div class="smart"><span>i</span><div><b>${state.kblis.length} KBLI dipakai bersama</b><p>KBLI utama menentukan profil dan satuan kapasitas. KBLI pendukung menambah proses dan kewajiban yang perlu diperiksa.</p></div></div>`:""}
-  <details><summary class="helper">API OSS tidak dapat diakses? Masukkan KBLI final secara manual</summary><div class="form-row"><label class="form-field">Kode KBLI 5 digit<input id="manual-code" maxlength="5" inputmode="numeric" placeholder="Contoh: 06100"></label><label class="form-field">Judul kegiatan<input id="manual-title" placeholder="Nama kegiatan"></label></div><button type="button" class="soft" data-action="manual-kbli" style="margin-top:8px">${k?"Tambahkan KBLI":"Gunakan sebagai KBLI utama"}</button></details>
+  <details><summary class="helper">API OSS tidak dapat diakses? Masukkan KBLI final secara manual</summary><div class="form-row"><label class="form-field">Kode KBLI 5 digit<input id="manual-code" maxlength="5" inputmode="numeric" data-manual-kbli="code" value="${esc(state.manualKbliCode||"")}" placeholder="Contoh: 06100"></label><label class="form-field">Judul kegiatan<input id="manual-title" data-manual-kbli="title" value="${esc(state.manualKbliTitle||"")}" placeholder="Nama kegiatan"></label></div><button type="button" class="soft" data-action="manual-kbli" style="margin-top:8px">${k?"Tambahkan KBLI":"Gunakan sebagai KBLI utama"}</button></details>
   <div class="label"><b>Proses yang relevan</b><small>Pilih yang benar-benar dilakukan</small></div><div class="activity-grid">${specific.activities.map(x=>`<button type="button" class="activity ${state.activities.includes(x)?"on":""}" data-activity="${esc(x)}"><b>${esc(x)}</b><small>${state.activities.includes(x)?"Dipilih":"Klik untuk memilih"}</small></button>`).join("")}</div>
   ${profile===QUESTIONNAIRE_PROFILES.coconut?`<div class="smart"><span>i</span><div><b>Batas KBLI 01261</b><p>Pengolahan kopra, minyak kelapa, atau produk makanan kelapa bukan bagian kegiatan kebun. Jika ada, tambahkan KBLI 10421, 10422/10423, atau 10793 dan tapis sebagai proses industri terpisah.</p></div></div>`:profile===QUESTIONNAIRE_PROFILES.oilpalm?`<div class="smart"><span>i</span><div><b>Kebun dan pabrik dipisahkan</b><p>KBLI 01262 mencakup pertanian kelapa sawit. Pabrik CPO/CPKO memerlukan KBLI industri terkait, misalnya 10431/10432, dengan satuan dan sumber dampak berbeda.</p></div></div>`:""}
   <div class="form-row"><label class="form-field">Nama proyek<input data-field="projectName" value="${esc(state.projectName)}" placeholder="Nama internal proyek"></label><label class="form-field">Status usaha<select data-field="projectStatus">${["Usaha baru","Pengembangan kapasitas","Perubahan proses/teknologi","Relokasi","Sudah beroperasi"].map(x=>`<option ${state.projectStatus===x?"selected":""}>${x}</option>`).join("")}</select></label></div>
@@ -1601,7 +1601,7 @@ function applyAnswerTriggers(id,value){
 function setKbli(data){
   state.kblis=[data];const profile=profileForCode(data.code);
   state.activities=profile.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.impacts=[...profile.defaults];state.wasteCodes=profile===QUESTIONNAIRE_PROFILES.migas?["b105d","b110d"]:[];state.showAllImpacts=false;
-  state.projectName=data.title;saveState();renderView();showToast(`KBLI ${data.code} dipilih. Pertanyaan, satuan, dampak, dan kandidat limbah sudah disesuaikan.`);
+  state.projectName=data.title;state.manualKbliCode="";state.manualKbliTitle="";saveState();renderView();showToast(`KBLI ${data.code} dipilih. Pertanyaan, satuan, dampak, dan kandidat limbah sudah disesuaikan.`);
 }
 function addKbli(data){
   const code=String(data?.code||"");
@@ -1640,6 +1640,8 @@ function updateField(el){
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!document.getElementById("entry-gate")?.hidden)closeEntryGate();});
 document.addEventListener("input",e=>{
   if(e.target.id==="kbli-search"){clearTimeout(searchTimer);searchTimer=setTimeout(()=>searchKbli(e.target.value),350);}
+  if(e.target.id==="manual-code"){state.manualKbliCode=e.target.value;saveState();}
+  if(e.target.id==="manual-title"){state.manualKbliTitle=e.target.value;saveState();}
   if(e.target.id==="reg-search"){state.regSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
   if(e.target.id==="doc-search"){state.docSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
   if(e.target.matches("[data-wms-toggle]")){const id=e.target.dataset.wmsToggle,checked=e.target.checked,statePref=state.mapLayerPreferences?.[id]||{};state.mapLayerPreferences={...(state.mapLayerPreferences||{}),[id]:{...statePref,visible:checked}};if(checked)siteMap?._enviroOfficialLayers?.[id]?.addTo(siteMap);else if(siteMap?._enviroOfficialLayers?.[id])siteMap.removeLayer(siteMap._enviroOfficialLayers[id]);saveState();return;}
