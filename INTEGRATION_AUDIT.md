@@ -2,10 +2,10 @@
 
 ## Dasar sumber eksternal
 
-AMDALNet dipublikasikan sebagai sistem informasi dokumen lingkungan hidup berbasis geospasial untuk digitalisasi dokumen dan proses persetujuan lingkungan. Sumber pemerintah menjelaskan aktor pemrakarsa, penyusun, penilai/pemeriksa, sektor terkait, serta publik/masyarakat; modul utamanya meliputi Penapisan Otomatis, Asistensi Pelingkupan, dan AMDAL Digital Workspace.  
+AMDALNet dipublikasikan sebagai sistem informasi dokumen lingkungan hidup berbasis geospasial untuk digitalisasi dokumen dan proses persetujuan lingkungan. Sumber pemerintah menjelaskan aktor pemrakarsa, penyusun, penilai/pemeriksa, sektor terkait, serta publik/masyarakat; modul utamanya meliputi Penapisan Otomatis, Asistensi Pelingkupan, dan AMDAL Digital Workspace.
 Sumber: https://infopublik.id/kategori/nasional-sosial-budaya/709525/ini-empat-proses-tahapan-persetujuan-lingkungan-di-aplikasi-amdalnet
 
-Portal AMDALNet publik menyediakan katalog panduan, termasuk panduan penapisan AMDAL/UKL-UPL/SPPL bagi pelaku usaha OSS serta materi pendokumentasian dan sinkronisasi data.  
+Portal AMDALNet publik menyediakan katalog panduan, termasuk panduan penapisan AMDAL/UKL-UPL/SPPL bagi pelaku usaha OSS serta materi pendokumentasian dan sinkronisasi data.
 Sumber: https://amdalnet.kemenlh.go.id/#/home/amdal-digital
 
 ## Temuan EnviroTrack
