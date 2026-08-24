@@ -1108,12 +1108,44 @@ function relevantRules(){
   if(state.regency==="Kabupaten Kutai Kartanegara")ids.push("kukar5-2014","kukar18-2024");
   return REGULATIONS.filter(r=>ids.includes(r.id));
 }
-function docRecommendation(){const r={...DEFAULT_COMPLIANCE_REVIEW,...(state.complianceReview||{})};return r.officialDocumentType&&r.officialDocumentType!=="Belum ditentukan"?`${r.officialDocumentType} · ${r.officialDocumentStatus}`:"Belum ditentukan · perlu penapisan resmi";}
+function indicativeDocumentRecommendation(){
+  const r={...DEFAULT_COMPLIANCE_REVIEW,...(state.complianceReview||{})},k=selectedKbli(),activityText=(state.activities||[]).join(" ").toLowerCase(),answerText=Object.values(state.answers||{}).join(" ").toLowerCase();
+  const coreInputs=[!!k,!!state.capacity&&!!state.capacityUnit,!!state.province&&!!state.regency,state.impacts.length>0].filter(Boolean).length;
+  const official=r.officialDocumentType&&r.officialDocumentType!=="Belum ditentukan"&&r.officialDocumentType!=="Lainnya / perlu klarifikasi";
+  const marine=/(coastal|seawater|dredging)/.test(state.impacts.join(" "))||/offshore|laut|pesisir|jetty|pelabuhan|tambak|reklamasi/.test(`${activityText} ${answerText}`);
+  const building=/(konstruksi|bangunan|fasilitas|gudang|workshop|jalan|drainase|terminal|pelabuhan|jetty|boiler|turbin|utilitas|ipal)/.test(activityText)||state.impacts.includes("construction-waste");
+  const complex=state.kblis.length>1||state.activities.length>=4||state.impacts.length>=8||marine||state.locationFlags.length>0;
+  const signals=[];
+  if(hasGroup("wastewater"))signals.push("air limbah");
+  if(hasGroup("emission"))signals.push("emisi udara");
+  if(hasGroup("b3"))signals.push("B3/limbah B3");
+  if(hasGroup("solid"))signals.push("limbah padat");
+  if(hasGroup("location")||marine)signals.push("sensitivitas lokasi/ruang laut");
+  if(hasGroup("other"))signals.push("dampak fisik, hayati, sosial, atau iklim");
+  let primary,confidence,explanation;
+  if(official){primary=`${r.officialDocumentType} · ${r.officialDocumentStatus}`;confidence="hasil resmi tercatat";explanation=`Register mencatat ${r.officialDocumentType} sebagai hasil yang kamu masukkan dari kanal resmi. Gunakan hasil ini sebagai acuan kerja utama dan cocokkan nomor, tanggal, sumber, serta kewenangannya.`;}
+  else if(complex){primary="AMDAL perlu diprioritaskan sebagai skenario penapisan";confidence=coreInputs>=3?"sedang":"rendah";explanation="Kegiatan memiliki kombinasi skala, proses, dampak, atau sensitivitas lokasi yang kompleks. Siapkan bahan penapisan AMDAL terlebih dahulu; hasil resmi dapat mengarahkan ke UKL-UPL atau SPPL bila kriteria formal tidak terpenuhi.";}
+  else if(signals.length){primary="UKL-UPL menjadi acuan kerja utama";confidence=coreInputs>=3?"sedang":"rendah";explanation="Profil memicu sumber dampak yang memerlukan pengelolaan dan pemantauan terstruktur. Susun paket UKL-UPL sebagai baseline kerja sambil menguji skala, proses, lokasi, dan aturan sektoral di OSS/AMDALNet.";}
+  else{primary="SPPL dapat menjadi kandidat awal";confidence="rendah";explanation="Belum ada sinyal dampak besar yang terpilih. Gunakan SPPL sebagai kandidat awal untuk persiapan data, tetapi tetap uji kegiatan dan skala pada penapisan resmi.";}
+  if(coreInputs<4&&!official)explanation+=` Data inti yang tersedia ${coreInputs}/4, sehingga rekomendasi ini sengaja diposisikan sebagai acuan awal dan bukan hasil final.`;
+  const documents=["Ringkasan kegiatan, seluruh KBLI, kapasitas, proses, dan tahap proyek","Polygon/titik lokasi, status lahan, provinsi–kabupaten/kota, serta hasil cek tapak"];
+  if(primary.startsWith("AMDAL"))documents.push("Bahan awal AMDAL: rona awal, sumber–penerima dampak, alternatif, dan kerangka RKL-RPL");else documents.push(`${primary.startsWith("UKL-UPL")?"Formulir UKL-UPL":"Draft SPPL"}, matriks pengelolaan–pemantauan, dan dasar pemilihan jalur`);
+  if(hasGroup("wastewater"))documents.push("Neraca air, inventaris aliran, desain IPAL, dan kandidat Pertek/SLO");
+  if(hasGroup("emission"))documents.push("Daftar sumber emisi, bahan bakar, parameter, alat kontrol, dan rencana monitoring");
+  if(hasGroup("b3"))documents.push("Inventaris B3/LB3, SDS, kode kandidat, neraca timbulan, dan rancangan penyimpanan");
+  if(marine)documents.push("Data pemanfaatan ruang laut/pesisir untuk pemeriksaan KKPRL");
+  if(building)documents.push("Daftar bangunan/fasilitas dan data teknis untuk jalur PBG/SLF bila terpicu");
+  const basis=signals.length?`Pemicu yang terbaca: ${signals.join(", ")}.`:`Pemicu lingkungan belum cukup terisi; hanya data kegiatan dasar yang tersedia.`;
+  return {primary,confidence,explanation,documents,basis,next:"Bawa kesimpulan ini ke penapisan OSS/AMDALNet atau PTSP/OPD. Setelah ada keluaran, catat jenis, status, nomor, tanggal, sumber, dan kewenangan pada register verifikasi."};
+}
+function docRecommendation(){return indicativeDocumentRecommendation().primary;}
+function renderRecommendationPanel(rec){return `<section class="screening-conclusion" aria-labelledby="screening-conclusion-title"><div class="conclusion-head"><div><small class="kicker">KESIMPULAN ACUAN</small><h3 id="screening-conclusion-title">Arah dokumen yang disarankan</h3></div><span class="conclusion-confidence">${esc(rec.confidence)}</span></div><div class="conclusion-grid"><div class="conclusion-main"><small>REKOMENDASI UTAMA</small><b>${esc(rec.primary)}</b><p>${esc(rec.explanation)}</p></div><div><small>PAKET DOKUMEN YANG DISIAPKAN</small><ul>${rec.documents.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></div><div><small>DASAR PEMICU</small><p>${esc(rec.basis)}</p></div><div><small>LANGKAH BERIKUTNYA</small><p>${esc(rec.next)}</p></div></div><p class="conclusion-note">Label ini adalah kesimpulan acuan dari input pengguna, bukan penerbitan atau penetapan legal. Jika hasil resmi sudah tersedia, masukkan hasil tersebut ke register agar menggantikan asumsi indikatif.</p></section>`;}
 function renderResult(){
-  const k=selectedKbli(),t=buildTasks(),rules=relevantRules(),coreInputs=[!!k,!!state.capacity&&!!state.capacityUnit,!!state.province&&!!state.regency,state.impacts.length>0].filter(Boolean).length;
+  const k=selectedKbli(),t=buildTasks(),rules=relevantRules(),rec=indicativeDocumentRecommendation(),coreInputs=[!!k,!!state.capacity&&!!state.capacityUnit,!!state.province&&!!state.regency,state.impacts.length>0].filter(Boolean).length;
   return `<div class="result-head"><span class="ok">OK</span><div><label>HASIL PENAPISAN INDIKATIF</label><h2>${esc(k?.code||"KBLI belum dipilih")} · ${esc(k?.title||"")}</h2><p>${state.kblis.length>1?`${state.kblis.length} KBLI digabung · `:""}${esc(state.projectStatus)} · ${esc(state.stage)} · ${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"kapasitas belum diisi"} di ${esc(state.regency)}, ${esc(state.province)}</p></div><div class="confidence"><b>${coreInputs}/4</b><small>input inti tersedia</small></div></div>
-  <div class="stats"><div class="stat"><small>Jalur dokumen</small><b>${docRecommendation()}</b><span>Bukan penetapan; cocokkan di AMDALNet/OSS</span></div><div class="stat"><small>Platform utama</small><b>OSS + AMDALNet</b><span>PTSP mengikuti kewenangan</span></div><div class="stat"><small>Kewajiban terpicu</small><b>${t.length} tugas</b><span>${state.impacts.length} sumber dampak</span></div></div>
-  <div class="alert"><span>!</span><div><b>Hasil indikatif, bukan keputusan instansi</b><p>Ambang skala rinci pada Permen LHK 4/2021 dan sensitivitas polygon tetap harus diverifikasi.</p></div><button type="button" class="soft" data-step="2">Lengkapi lokasi</button></div>
+  <div class="stats"><div class="stat"><small>Jalur dokumen</small><b>${esc(rec.primary)}</b><span>Bukan penetapan · ${esc(rec.confidence)} · acuan dari data yang diisi</span></div><div class="stat"><small>Platform utama</small><b>OSS + AMDALNet</b><span>PTSP mengikuti kewenangan</span></div><div class="stat"><small>Kewajiban terpicu</small><b>${t.length} tugas</b><span>${state.impacts.length} sumber dampak</span></div></div>
+  ${renderRecommendationPanel(rec)}
+  <div class="alert"><span>!</span><div><b>Hasil indikatif, bukan keputusan instansi</b><p>Gunakan kesimpulan ini sebagai acuan persiapan; cocokkan ambang skala, sektor, sensitivitas polygon, dan kewenangan melalui kanal resmi.</p></div><button type="button" class="soft" data-step="2">Lengkapi lokasi</button></div>
   ${state.complianceReview?.reScreenRequired?`<div class="alert"><span>!</span><div><b>Perlu re-screening setelah perubahan</b><p>${esc(state.complianceReview.reScreenReason||"Data proyek berubah.")} Tinjau ulang hasil sebelum mengandalkan checklist.</p></div><button type="button" class="soft" data-action="clear-rescreen">Tandai ditinjau</button></div>`:""}
   ${renderValidationPanel(true)}${renderComplianceRegister()}
   <h3 class="rules-title">Regulasi yang terpicu · ${rules.length}</h3><div class="rules">${rules.map(r=>`<div class="rule"><span class="badge ${r.level==="Nasional"?"general":r.level==="Sektoral"?"sectoral":"local"}">${r.level.toUpperCase()}</span><p><b>${esc(r.title)}</b><small>${esc(r.about)}</small></p>${officialLink(r.url,"Sumber")}</div>`).join("")}</div>`;
