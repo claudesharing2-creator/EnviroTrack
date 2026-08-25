@@ -875,6 +875,15 @@ function normalizeState(saved){
   merged.kblis=(Array.isArray(merged.kblis)?merged.kblis:[]).filter(k=>{const code=String(k?.code||"");if(!/^\d{5}$/.test(code)||seenKbli.has(code))return false;seenKbli.add(code);return true;});
   if(!saved?.capacityUnit){const match=String(saved?.capacity||"").match(/([\d.,]+)\s*(.*)/);if(match){merged.capacity=match[1];merged.capacityUnit=match[2]||profileForCode(saved?.kblis?.[0]?.code).units[0];}}
   if(!Array.isArray(merged.wasteCodes))merged.wasteCodes=[];
+  if(!Array.isArray(merged.impactSuppressed))merged.impactSuppressed=[];
+  if(!Array.isArray(merged.wasteSuppressed))merged.wasteSuppressed=[];
+  if(!Array.isArray(merged.impactManual))merged.impactManual=Array.isArray(saved?.impacts)&&!saved?.impactSources?[...new Set(saved.impacts.map(String))]:[];
+  if(!Array.isArray(merged.wasteManual))merged.wasteManual=Array.isArray(saved?.wasteCodes)&&!saved?.wasteSources?[...new Set(saved.wasteCodes.map(String))]:[];
+  if(!merged.impactSources||typeof merged.impactSources!=="object"||Array.isArray(merged.impactSources))merged.impactSources={};
+  if(!merged.wasteSources||typeof merged.wasteSources!=="object"||Array.isArray(merged.wasteSources))merged.wasteSources={};
+  if(!merged.activitiesByKbli||typeof merged.activitiesByKbli!=="object"||Array.isArray(merged.activitiesByKbli))merged.activitiesByKbli={};
+  merged.activitiesByKbli=Object.fromEntries(Object.entries(merged.activitiesByKbli).filter(([code,items])=>/^\d{5}$/.test(code)&&Array.isArray(items)).map(([code,items])=>[code,[...new Set(items.map(String))]]));
+  if(merged.kblis[0]?.code&&!Object.prototype.hasOwnProperty.call(merged.activitiesByKbli,merged.kblis[0].code)&&Array.isArray(merged.activities))merged.activitiesByKbli[merged.kblis[0].code]=[...new Set(merged.activities.map(String))];
   if(!Array.isArray(merged.masterB3Selected))merged.masterB3Selected=[];
   if(!Array.isArray(merged.masterLB3Selected))merged.masterLB3Selected=[];
   if(!["b3","lb3"].includes(merged.masterB3Kind))merged.masterB3Kind="lb3";
@@ -892,9 +901,9 @@ function normalizeState(saved){
   merged.amdalStudy={activePhase:0,teamReady:false,knowledgeChecked:false,...(saved?.amdalStudy&&typeof saved.amdalStudy==="object"?saved.amdalStudy:{})};
   if(!Number.isInteger(merged.amdalStudy.activePhase)||merged.amdalStudy.activePhase<0||merged.amdalStudy.activePhase>4)merged.amdalStudy.activePhase=0;
   merged.amdalStudy.teamReady=merged.amdalStudy.teamReady===true;merged.amdalStudy.knowledgeChecked=merged.amdalStudy.knowledgeChecked===true;
-  if(!PROVINCES.includes(merged.province)){merged.province=DEFAULT_STATE.province;merged.regency=DEFAULT_STATE.regency;}
+  if(merged.province&&!PROVINCES.includes(merged.province)){merged.province="";merged.regency="";}
   const provinceRegencies=REGENCIES[merged.province];const knownOtherRegency=Object.entries(REGENCIES).some(([province,items])=>province!==merged.province&&items.includes(merged.regency));
-  if(provinceRegencies&&!provinceRegencies.includes(merged.regency))merged.regency=provinceRegencies[0];if(!provinceRegencies&&knownOtherRegency)merged.regency="";
+  if(!merged.province)merged.regency="";else if(provinceRegencies&&!provinceRegencies.includes(merged.regency))merged.regency=provinceRegencies[0]||"";else if(!provinceRegencies&&knownOtherRegency)merged.regency="";
   if(!["all","project"].includes(merged.regMode))merged.regMode="all";if(!["Semua","Nasional","Sektoral","Daerah"].includes(merged.regFilter))merged.regFilter="Semua";if(merged.regProvince!=="Semua daerah"&&!REGULATIONS.some(r=>r.province===merged.regProvince))merged.regProvince="Semua daerah";
   if(!["all","Tata ruang","Kawasan sensitif"].includes(merged.mapCatalogScope))merged.mapCatalogScope="all";if(!["all","ready","pending"].includes(merged.mapCatalogStatus))merged.mapCatalogStatus="all";if(!["all","IKN","Indonesia","Kalimantan Timur","WP 5 IKN Timur 2","Perlu konfirmasi"].includes(merged.mapCatalogCoverage))merged.mapCatalogCoverage="all";
   return merged;
@@ -912,7 +921,7 @@ function readStoredState(){
 let state = loadState();
 let lastRenderedView=null;
 function createNewProjectState(){
-  return {...DEFAULT_STATE,view:"screening",step:0,kblis:[],projectName:"Proyek baru",projectStatus:"Usaha baru",stage:"Pra-konstruksi",capacity:"",capacityUnit:"",activities:[],impacts:[],answers:{},wasteCodes:[],showAllImpacts:false,showAllWaste:false,legalPurpose:"business",legalOwners:"",legalUmk:"",locationFlags:[],openTask:0,taskFilter:"all",taskProgress:{},documentTask:null,documents:DEFAULT_DOCUMENTS.map(x=>({...x,taskIds:[...x.taskIds]})),docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false},masterB3Search:"",masterB3Kind:"lb3",masterB3Selected:[],masterLB3Selected:[],mapLayerPreferences:{},mapCatalogOpen:false,mapCatalogScope:"all",mapCatalogStatus:"all",mapCatalogCoverage:"all",complianceReview:{...DEFAULT_COMPLIANCE_REVIEW},obligationRegister:[],amdalStudy:{activePhase:0,teamReady:false,knowledgeChecked:false}};
+  return {...DEFAULT_STATE,view:"screening",step:0,kblis:[],projectName:"Proyek baru",projectStatus:"Usaha baru",stage:"Pra-konstruksi",capacity:"",capacityUnit:"",activities:[],activitiesByKbli:{},impacts:[],impactSuppressed:[],impactSources:{},answers:{},wasteCodes:[],wasteSuppressed:[],wasteSources:{},showAllImpacts:false,showAllWaste:false,legalPurpose:"business",legalOwners:"",legalUmk:"",province:"",regency:"",locationFlags:[],openTask:0,taskFilter:"all",taskProgress:{},documentTask:null,documents:[],docProject:"",docSearch:"",regFilter:"Semua",regSearch:"",regMode:"all",regProvince:"Semua daerah",docFilter:"Semua",docStorage:{mode:"browser",rootName:"",rootFolder:"EnviroTrack",connected:false},masterB3Search:"",masterB3Kind:"lb3",masterB3Selected:[],masterLB3Selected:[],mapLayerPreferences:{},mapCatalogOpen:false,mapCatalogScope:"all",mapCatalogStatus:"all",mapCatalogCoverage:"all",complianceReview:{...DEFAULT_COMPLIANCE_REVIEW},obligationRegister:[],amdalStudy:{activePhase:0,teamReady:false,knowledgeChecked:false}};
 }
 let entryGateTrigger=null;
 let entryCloseTimer=null;
@@ -1021,7 +1030,7 @@ function buildTasks(){
     {id:"nib",title:"Validasi seluruh KBLI, tingkat risiko, dan NIB",cat:"Legalitas",status:"ready",due:"Hari 1",rule:"PP 28/2025",owner:"Legal",reason:"KBLI utama dan pendukung beserta ruang lingkupnya menentukan perizinan dasar serta kewajiban berikutnya.",evidence:"Daftar KBLI utama dan pendukung, uraian kegiatan, skala tiap bidang usaha, NIB/draf OSS.",system:["OSS",LINKS.oss],ruleUrl:REGULATIONS.find(r=>r.id==="pp28-2025").url},
     {id:"spatial",title:"Unggah polygon dan cek kesesuaian ruang",cat:"Prasyarat",status:state.polygon&&polygonCheck.valid?"ready":"blocked",due:"Hari 2",rule:"Tata ruang pusat/daerah",owner:"GIS",reason:state.polygon&&polygonCheck.valid?"Polygon valid secara geometri dan siap ditinjau terhadap sumber tata ruang/kawasan resmi; hasil irisan tetap perlu feature query atau konfirmasi instansi.":"Koordinat menentukan kewenangan, sensitivitas, dan kesesuaian pemanfaatan ruang.",evidence:"Polygon GeoJSON/KML, hasil pemeriksaan geometri, luas tapak, dokumen kesesuaian ruang, dan bukti overlay resmi.",system:[state.province==="Kalimantan Timur"?"WebGIS Kaltim":ptsp.name,state.province==="Kalimantan Timur"?LINKS.gisKaltim:ptsp.url],ruleUrl:LINKS.jdihn},
     {id:"screen",title:"Konfirmasi AMDAL / UKL-UPL / SPPL",cat:"Persetujuan lingkungan",status:"ready",due:"Hari 3",rule:"Permen LHK 4/2021",owner:"Environment",reason:"Jenis, skala, dan lokasi kegiatan harus dicocokkan dengan daftar wajib dokumen lingkungan.",evidence:"NIB, KBLI, kapasitas, uraian proses, polygon, hasil penapisan.",system:["AMDALNet",LINKS.amdalnet],ruleUrl:"https://peraturan.go.id/id/permen-lhk-no-4-tahun-2021"},
-    {id:"local",title:`Konfirmasi layanan dan kewenangan ${state.regency}`,cat:"Daerah",status:"ready",due:"Hari 3",rule:"PTSP & JDIH daerah",owner:"Legal",reason:"DPMPTSP menjadi titik layanan/fasilitasi daerah dan dapat terlibat dalam verifikasi atau pemrosesan bersama OPD teknis sesuai kewenangan.",evidence:"Alamat/polygon, identitas pelaku usaha, ID proyek OSS, daftar izin dan persyaratan dasar terkait.",system:[ptsp.name,ptsp.url],ruleUrl:LINKS.jdihn}
+    {id:"local",title:`Konfirmasi layanan dan kewenangan ${state.regency||"sesuai lokasi"}`,cat:"Daerah",status:"ready",due:"Hari 3",rule:"PTSP & JDIH daerah",owner:"Legal",reason:"DPMPTSP menjadi titik layanan/fasilitasi daerah dan dapat terlibat dalam verifikasi atau pemrosesan bersama OPD teknis sesuai kewenangan.",evidence:"Alamat/polygon, identitas pelaku usaha, ID proyek OSS, daftar izin dan persyaratan dasar terkait.",system:[ptsp.name,ptsp.url],ruleUrl:LINKS.jdihn}
   );
   if(needsMarine)tasks.push({id:"kkprl",title:"Konfirmasi KKPRL dan pemanfaatan ruang laut",cat:"Persyaratan dasar",status:"ready",due:"Sebelum pengajuan",rule:"PP 28/2025 · OSS",owner:"Legal / GIS",reason:"Kegiatan yang menggunakan ruang laut atau fasilitas pesisir perlu memeriksa jalur KKPRL secara terpisah dari KKPR darat.",evidence:"Polygon ruang laut, jenis pemanfaatan, luas/durasi, nomor pengajuan atau keputusan, dan konfirmasi instansi.",system:["OSS Persyaratan Dasar", "https://oss.go.id/id/persyaratan-dasar?tab=&path=persetujuan-laut"],ruleUrl:"https://oss.go.id/id/persyaratan-dasar?tab=&path=persetujuan-laut"});
   if(needsBuilding)tasks.push({id:"pbg-slf",title:"Konfirmasi PBG/SLF untuk bangunan dan fasilitas",cat:"Persyaratan dasar",status:"ready",due:"Sebelum konstruksi/operasi",rule:"PP 28/2025 · PBG/SLF",owner:"Engineering / Legal",reason:"Bangunan dan fasilitas penunjang dapat memiliki persyaratan dasar tersendiri selain Persetujuan Lingkungan.",evidence:"Daftar bangunan, dokumen teknis, PBG, as-built, dan SLF bila dipersyaratkan.",system:["OSS Persyaratan Dasar", "https://oss.go.id/id/persyaratan-dasar?tab=&path=persetujuan-bangunan"],ruleUrl:"https://oss.go.id/id/persyaratan-dasar?tab=&path=persetujuan-bangunan"});
@@ -1069,8 +1078,8 @@ function renderProfile(){
   <div class="search-wrap"><span class="search-icon">⌕</span><input id="kbli-search" class="searchbox" autocomplete="off" placeholder="Cari kode atau kegiatan, mis. 06100 / minyak / rumah sakit" aria-label="Cari KBLI 2025"><span id="kbli-spinner" class="spinner hide"></span><div id="kbli-suggestions" class="suggestions hide"></div></div>
   <div class="official-line"><span>Pencarian memakai katalog lokal KBLI 2025 terlebih dahulu. OSS hanya dibuka jika kamu menekan pencarian resmi.</span>${officialLink(LINKS.kbli,"Buka pencarian lengkap OSS")}</div>
   ${selectedCard}
-  ${k?`<div class="kbli-correlation"><b>Hubungan KBLI</b><p><strong>KBLI ${esc(k.code)}</strong> menjadi konteks awal. Centang hanya proses yang benar-benar dilakukan; pilihan ini dipakai pada langkah sumber dampak dan dokumen.</p></div>`:""}
-  ${state.kblis.length>1?`<div class="smart"><span>i</span><div><b>${state.kblis.length} KBLI dipakai bersama</b><p>KBLI utama menentukan profil dan satuan kapasitas. KBLI pendukung menambah proses dan kewajiban yang perlu diperiksa.</p></div></div>`:""}
+  ${k?`<div class="kbli-correlation"><b>Hubungan KBLI</b><p><strong>KBLI ${esc(k.code)}</strong> menjadi konteks awal. Centang hanya proses yang benar-benar dilakukan; pilihan ini dipakai pada langkah sumber dampak dan dokumen.</p><div class="mapping-provenance"><span>SUMBER PEMETAAN</span><b>${esc(specific.mappingLabel||"Baseline sektor")}</b><small>${esc(specific.mappingNote||"Cocokkan proses aktual dengan uraian KBLI dan sumber resmi.")}</small></div></div>`:""}
+  ${state.kblis.length>1?`<div class="smart"><span>i</span><div><b>${state.kblis.length} KBLI dipakai bersama</b><p>KBLI utama menentukan profil dan satuan kapasitas. KBLI pendukung menambah baseline proses, dampak, dan kewajiban. Tinjau ringkasan gabungan sebelum lanjut.</p><small>${state.kblis.slice(1).map(item=>`${esc(item.code)} · ${esc((state.activitiesByKbli||{})[String(item.code)]?.join(", ")||"proses awal belum dicatat")}`).join("<br>")}</small></div></div>`:""}
   <details><summary class="helper">API OSS tidak dapat diakses? Masukkan KBLI final secara manual</summary><div class="form-row"><label class="form-field">Kode KBLI 5 digit<input id="manual-code" maxlength="5" inputmode="numeric" data-manual-kbli="code" value="${esc(state.manualKbliCode||"")}" placeholder="Contoh: 06100"></label><label class="form-field">Judul kegiatan<input id="manual-title" data-manual-kbli="title" value="${esc(state.manualKbliTitle||"")}" placeholder="Nama kegiatan"></label></div><button type="button" class="soft" data-action="manual-kbli" style="margin-top:8px">${k?"Tambahkan KBLI":"Gunakan sebagai KBLI utama"}</button></details>
   <div class="label"><b>Proses yang relevan</b><small>Pilih yang benar-benar dilakukan</small></div><div class="activity-grid">${specific.activities.map(x=>`<button type="button" class="activity ${state.activities.includes(x)?"on":""}" data-activity="${esc(x)}"><b>${esc(x)}</b><small>${state.activities.includes(x)?"Dipilih":"Klik untuk memilih"}</small></button>`).join("")}</div>
   ${profile===QUESTIONNAIRE_PROFILES.coconut?`<div class="smart"><span>i</span><div><b>Batas KBLI 01261</b><p>Pengolahan kopra, minyak kelapa, atau produk makanan kelapa bukan bagian kegiatan kebun. Jika ada, tambahkan KBLI 10421, 10422/10423, atau 10793 dan tapis sebagai proses industri terpisah.</p></div></div>`:profile===QUESTIONNAIRE_PROFILES.oilpalm?`<div class="smart"><span>i</span><div><b>Kebun dan pabrik dipisahkan</b><p>KBLI 01262 mencakup pertanian kelapa sawit. Pabrik CPO/CPKO memerlukan KBLI industri terkait, misalnya 10431/10432, dengan satuan dan sumber dampak berbeda.</p></div></div>`:""}
@@ -1162,7 +1171,7 @@ function renderLocation(){
   return heading(3,"Tentukan tapak dan kewenangan","Lokasi memicu overlay tata ruang, kawasan sensitif, pembagian kewenangan, serta regulasi provinsi dan kabupaten/kota")+
   `<input class="hide" id="polygon-file-input" type="file" accept=".geojson,.json,.kml,application/geo+json,application/json,text/xml"><div class="site-map-card"><div class="site-map-head"><div><span class="kicker">PETA TAPAK & LAYER</span><b>${polygonLabel}</b><small>${polygonNote}</small></div><span class="map-source-badge">OSM</span></div><div class="site-map" id="site-map"><div class="site-map-status" id="site-map-status">Memuat peta dasar OpenStreetMap…</div></div><div class="site-map-foot"><span>Layer dasar: OpenStreetMap · layer polygon: ${polygon?"aktif":"belum tersedia"}</span><a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Laporkan masalah peta</a></div></div><div class="mapbox mapbox-summary"><b>${polygonLabel}</b><small>${polygonNote}</small><div class="map-actions"><button type="button" class="primary" data-action="upload-polygon">${polygon?"Ganti polygon":"Unggah polygon"}</button>${polygon?'<button type="button" class="soft" data-action="remove-polygon">Hapus</button>':""}</div></div>
   ${locationAssessmentMarkup()}${officialLayerCatalogMarkup()}<section class="location-recommendation"><div><span class="kicker">REKOMENDASI POLYGON</span><h3>Jadikan polygon sebagai sumber lokasi utama.</h3><p>Gunakan peta untuk memeriksa bentuk dan posisi tapak, lalu validasi sistem koordinat, luas, status lahan, serta overlay RTR/RDTR, hutan, konservasi, gambut, karst, pesisir, sempadan, dan batas administrasi dari sumber resmi. Peta OSM di sini adalah basemap, bukan bukti kesesuaian ruang.</p></div><div class="recommendation-tags"><span>EPSG:4326</span><span>Validasi luas</span><span>Overlay resmi</span></div></section>
-  <div class="form-row"><label class="form-field">Provinsi<select data-field="province">${PROVINCES.map(x=>`<option ${state.province===x?"selected":""}>${x}</option>`).join("")}</select><small>38 provinsi Indonesia tersedia</small></label><label class="form-field">Kabupaten / kota${regencyField}<small>${regs.length?`${regs.length} wilayah tersedia di provinsi ini`:"Periksa data provinsi"}</small></label></div>
+  <div class="form-row"><label class="form-field">Provinsi<select data-field="province"><option value="" ${!state.province?"selected":""}>Pilih provinsi</option>${PROVINCES.map(x=>`<option ${state.province===x?"selected":""}>${x}</option>`).join("")}</select><small>38 provinsi Indonesia tersedia</small></label><label class="form-field">Kabupaten / kota${regencyField}<small>${regs.length?`${regs.length} wilayah tersedia di provinsi ini`:"Periksa data provinsi"}</small></label></div>
   <p class="location-claim-note">Flag berikut adalah pernyataan pengguna untuk memicu pekerjaan verifikasi, bukan hasil overlay resmi. Centang hanya jika ada dasar dokumen atau pemeriksaan lapangan.</p><div class="checks">${[["estate","Berada di kawasan industri"],["forest-cross","Beririsan kawasan hutan"],["marine-cross","Memakai ruang laut/pesisir"],["cross-admin","Lintas kabupaten/provinsi"],["protected","Dekat kawasan lindung/konservasi"],["river-buffer","Berada dekat sempadan sungai/danau"]].map(([key,label])=>`<label><input type="checkbox" data-location="${key}" ${state.locationFlags.includes(key)?"checked":""}> ${label}</label>`).join("")}</div>
   <div class="smart"><span>i</span><div><b>Lapisan daerah</b><p>${state.province==="Kalimantan Timur"?"Pilot regulasi daerah tersedia untuk Provinsi Kalimantan Timur, Kota Balikpapan, dan Kabupaten Kutai Kartanegara.":"Regulasi lokal daerah ini belum dipetakan di prototipe. Tracker akan menambahkan tugas verifikasi JDIH dan PTSP setempat."} Daftar 514 kabupaten/kota mengikuti Kepmendagri 300.2.2-2430 Tahun 2025.</p>${officialLink(LINKS.wilayahRef,"Buka sumber wilayah")}</div></div>`;
 }
@@ -1210,6 +1219,7 @@ function indicativeDocumentRecommendation(){
   if(hasGroup("b3"))signals.push("B3/limbah B3");
   if(hasGroup("solid"))signals.push("limbah padat");
   if(hasGroup("location")||marine)signals.push("sensitivitas lokasi/ruang laut");
+  if(state.locationFlags?.length)signals.push(`flag lokasi manual (${state.locationFlags.length})`);
   if(hasGroup("other"))signals.push("dampak fisik, hayati, sosial, atau iklim");
   let primary,confidence,explanation;
   if(official){primary=`${r.officialDocumentType} · ${r.officialDocumentStatus}`;confidence="hasil resmi tercatat";explanation=`Register mencatat ${r.officialDocumentType} sebagai hasil yang kamu masukkan dari kanal resmi. Gunakan hasil ini sebagai acuan kerja utama dan cocokkan nomor, tanggal, sumber, serta kewenangannya.`;}
@@ -1233,12 +1243,12 @@ function docRecommendation(){return indicativeDocumentRecommendation().primary;}
 function renderRecommendationPanel(rec){return `<section class="screening-conclusion" aria-labelledby="screening-conclusion-title"><div class="conclusion-head"><div><small class="kicker">KESIMPULAN ACUAN</small><h3 id="screening-conclusion-title">Dokumen acuan yang disarankan</h3></div><span class="conclusion-confidence">${esc(rec.confidence)}</span></div><div class="conclusion-grid"><div class="conclusion-main"><small>DOKUMEN YANG DIACU</small><b>${esc(rec.primary)}</b><p>Ini adalah arah kerja EnviroTrack berdasarkan data proyek saat ini.</p></div><div><small>KENAPA</small><p>${esc(rec.explanation)}</p></div><div><small>SIAPKAN SEKARANG</small><ul>${rec.documents.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></div><div><small>ACUAN REGULASI & PEMICU</small><p>${esc(rec.basis)}</p></div><div><small>SESUDAH ITU</small><p>${esc(rec.next)}</p></div></div><p class="conclusion-note">Ini kesimpulan acuan dari input pengguna, bukan penerbitan atau penetapan legal. Jika hasil resmi sudah tersedia, masukkan hasil tersebut ke register agar menggantikan asumsi indikatif.</p></section>`;}
 function renderResult(){
   const k=selectedKbli(),t=buildTasks(),rules=relevantRules(),rec=indicativeDocumentRecommendation(),coreInputs=[!!k,!!state.capacity&&!!state.capacityUnit,!!state.province&&!!state.regency,state.impacts.length>0].filter(Boolean).length;
-  return `<div class="result-head"><span class="ok">OK</span><div><label>HASIL PENAPISAN INDIKATIF</label><h2>${esc(k?.code||"KBLI belum dipilih")} · ${esc(k?.title||"")}</h2><p>${state.kblis.length>1?`${state.kblis.length} KBLI digabung · `:""}${esc(state.projectStatus)} · ${esc(state.stage)} · ${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"kapasitas belum diisi"} di ${esc(state.regency)}, ${esc(state.province)}</p></div><div class="confidence"><b>${coreInputs}/4</b><small>input inti tersedia</small></div></div>
+  return `<div class="result-head"><span class="ok">OK</span><div><label>HASIL PENAPISAN INDIKATIF</label><h2>${esc(k?.code||"KBLI belum dipilih")} · ${esc(k?.title||"")}</h2><p>${state.kblis.length>1?`${state.kblis.length} KBLI digabung · `:""}${esc(state.projectStatus)} · ${esc(state.stage)} · ${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"kapasitas belum diisi"} di ${esc(state.regency||"lokasi belum dipilih")}${state.province?`, ${esc(state.province)}`:""}</p></div><div class="confidence"><b>${coreInputs}/4</b><small>input inti tersedia</small></div></div>
   <div class="stats"><div class="stat"><small>Jalur dokumen</small><b>${esc(rec.primary)}</b><span>Bukan penetapan · ${esc(rec.confidence)} · acuan dari data yang diisi</span></div><div class="stat"><small>Platform utama</small><b>OSS + AMDALNet</b><span>PTSP mengikuti kewenangan</span></div><div class="stat"><small>Kewajiban terpicu</small><b>${t.length} tugas</b><span>${state.impacts.length} sumber dampak</span></div></div>
   ${renderRecommendationPanel(rec)}
   <div class="alert"><span>!</span><div><b>Hasil indikatif, bukan keputusan instansi</b><p>Gunakan kesimpulan ini sebagai acuan persiapan; cocokkan ambang skala, sektor, sensitivitas polygon, dan kewenangan melalui kanal resmi.</p></div><button type="button" class="soft" data-step="2">Lengkapi lokasi</button></div>
   ${state.complianceReview?.reScreenRequired?`<div class="alert"><span>!</span><div><b>Perlu re-screening setelah perubahan</b><p>${esc(state.complianceReview.reScreenReason||"Data proyek berubah.")} Tinjau ulang hasil sebelum mengandalkan checklist.</p></div><button type="button" class="soft" data-action="clear-rescreen">Tandai ditinjau</button></div>`:""}
-  ${renderValidationPanel(true)}${renderComplianceRegister()}
+  ${renderValidationPanel(true)}${renderComplianceRegister()}${state.locationFlags?.length?`<div class="smart location-trigger-note"><span>!</span><div><b>Flag lokasi yang perlu diverifikasi</b><p>${state.locationFlags.map(key=>({"estate":"kawasan industri","forest-cross":"kawasan hutan","marine-cross":"ruang laut/pesisir","cross-admin":"lintas administrasi","protected":"kawasan lindung/konservasi","river-buffer":"sempadan sungai/danau"}[key]||key)).join(", ")}. Flag ini memicu pekerjaan verifikasi dan tidak membuktikan irisan polygon.</p></div></div>`:""}
   <h3 class="rules-title">Regulasi yang terpicu · ${rules.length}</h3><div class="rules">${rules.map(r=>`<div class="rule"><span class="badge ${r.level==="Nasional"?"general":r.level==="Sektoral"?"sectoral":"local"}">${r.level.toUpperCase()}</span><p><b>${esc(r.title)}</b><small>${esc(r.about)}</small></p>${officialLink(r.url,"Sumber")}</div>`).join("")}</div>`;
 }
 
@@ -1355,7 +1365,7 @@ function renderTracker(){
 
 function renderContext(){
   const k=selectedKbli(),pack=activePack(),profile=activeProfile(),tasks=buildTasks();
-  document.getElementById("context").innerHTML=`<div class="context-title"><span>Ringkasan proyek</span><span>Aktif</span></div><div class="project-card"><span class="sector-icon">${pack.icon}</span><div><b>${esc(state.projectName)}</b><small>${esc(profile.name)}</small></div><em>${esc(k?.code||"—")}${state.kblis.length>1?` +${state.kblis.length-1}`:""}</em></div><dl class="facts"><div><dt>KBLI</dt><dd>${state.kblis.length||0} bidang usaha</dd></div><div><dt>Status</dt><dd>${esc(state.projectStatus)}</dd></div><div><dt>Tahap</dt><dd>${esc(state.stage)}</dd></div><div><dt>Kapasitas utama</dt><dd>${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"Belum diisi"}</dd></div><div><dt>Lokasi</dt><dd>${esc(state.regency)}</dd></div><div><dt>Sumber dampak</dt><dd>${state.impacts.length} dipilih</dd></div><div><dt>Kandidat B3/LB3</dt><dd>${state.wasteCodes.length+masterCandidateCount()}</dd></div></dl><div class="divider"></div><div class="trigger-head"><span>Kewajiban terpicu</span><b>${tasks.length}</b></div><div class="trigger-list"><div class="trigger"><span class="dot green-dot"></span><p><b>Dokumen lingkungan</b><small>AMDAL / UKL-UPL / SPPL ditapis</small></p></div>${hasGroup("wastewater")?'<div class="trigger"><span class="dot blue-dot"></span><p><b>Air limbah</b><small>Inventarisasi, Pertek, dan SLO</small></p></div>':""}${hasGroup("emission")?'<div class="trigger"><span class="dot orange-dot"></span><p><b>Emisi</b><small>Sumber, baku mutu, pemantauan</small></p></div>':""}${hasGroup("b3")?'<div class="trigger"><span class="dot red-dot"></span><p><b>B3 dan limbah B3</b><small>Kode kandidat, neraca, TPS, dan manifest</small></p></div>':""}${state.province==="Kalimantan Timur"?'<div class="trigger"><span class="dot purple-dot"></span><p><b>Regulasi daerah</b><small>Indeks Kaltim tersedia</small></p></div>':""}</div><div class="divider"></div><div class="legal"><span>R</span><div><b>Dasar aturan transparan</b><p>Tugas memuat sistem tujuan, regulasi, alasan pemicu, dan bukti.</p><button type="button" class="action-link" data-view="regulations" data-reg-open="project">Lihat regulasi proyek</button></div></div><p class="disclaimer">Prototipe pendukung keputusan. Verifikasi tenaga ahli dan keputusan instansi tetap diperlukan.</p>`;
+  document.getElementById("context").innerHTML=`<div class="context-title"><span>Ringkasan proyek</span><span>Aktif</span></div><div class="project-card"><span class="sector-icon">${pack.icon}</span><div><b>${esc(state.projectName)}</b><small>${esc(profile.name)}</small></div><em>${esc(k?.code||"—")}${state.kblis.length>1?` +${state.kblis.length-1}`:""}</em></div><dl class="facts"><div><dt>KBLI</dt><dd>${state.kblis.length||0} bidang usaha</dd></div><div><dt>Status</dt><dd>${esc(state.projectStatus)}</dd></div><div><dt>Tahap</dt><dd>${esc(state.stage)}</dd></div><div><dt>Kapasitas utama</dt><dd>${state.capacity?`${esc(state.capacity)} ${esc(state.capacityUnit)}`:"Belum diisi"}</dd></div><div><dt>Lokasi</dt><dd>${esc(state.regency||"Belum dipilih")}</dd></div><div><dt>Sumber dampak</dt><dd>${state.impacts.length} dipilih</dd></div><div><dt>Kandidat B3/LB3</dt><dd>${state.wasteCodes.length+masterCandidateCount()}</dd></div></dl><div class="divider"></div><div class="trigger-head"><span>Kewajiban terpicu</span><b>${tasks.length}</b></div><div class="trigger-list"><div class="trigger"><span class="dot green-dot"></span><p><b>Dokumen lingkungan</b><small>AMDAL / UKL-UPL / SPPL ditapis</small></p></div>${hasGroup("wastewater")?'<div class="trigger"><span class="dot blue-dot"></span><p><b>Air limbah</b><small>Inventarisasi, Pertek, dan SLO</small></p></div>':""}${hasGroup("emission")?'<div class="trigger"><span class="dot orange-dot"></span><p><b>Emisi</b><small>Sumber, baku mutu, pemantauan</small></p></div>':""}${hasGroup("b3")?'<div class="trigger"><span class="dot red-dot"></span><p><b>B3 dan limbah B3</b><small>Kode kandidat, neraca, TPS, dan manifest</small></p></div>':""}${state.province==="Kalimantan Timur"?'<div class="trigger"><span class="dot purple-dot"></span><p><b>Regulasi daerah</b><small>Indeks Kaltim tersedia</small></p></div>':""}</div><div class="divider"></div><div class="legal"><span>R</span><div><b>Dasar aturan transparan</b><p>Tugas memuat sistem tujuan, regulasi, alasan pemicu, dan bukti.</p><button type="button" class="action-link" data-view="regulations" data-reg-open="project">Lihat regulasi proyek</button></div></div><p class="disclaimer">Prototipe pendukung keputusan. Verifikasi tenaga ahli dan keputusan instansi tetap diperlukan.</p>`;
 }
 
 function renderScreening(){
@@ -1589,63 +1599,97 @@ function addTriggeredImpacts(keys=[]){state.impacts=[...new Set([...state.impact
 function addWasteCodes(keys=[]){state.wasteCodes=[...new Set([...state.wasteCodes,...keys])];}
 function removeImpacts(keys=[]){state.impacts=state.impacts.filter(k=>!keys.includes(k));}
 function removeWasteCodes(keys=[]){state.wasteCodes=state.wasteCodes.filter(k=>!keys.includes(k));}
-function applyAnswerTriggers(id,value){
-  if(id==="chemicalUse"&&value.includes("Digunakan")){addTriggeredImpacts(["chemical","packaging",...(value.includes("disimpan")?["storage","spill"]:[])]);addWasteCodes(["b104d"]);if([QUESTIONNAIRE_PROFILES.coconut,QUESTIONNAIRE_PROFILES.oilpalm,QUESTIONNAIRE_PROFILES.plantation].includes(activeProfile()))addWasteCodes(["pesticide-verify"]);}
-  if(id==="chemicalUse"&&value==="Tidak digunakan"){removeImpacts(["chemical"]);removeWasteCodes(["b104d","pesticide-verify"]);}
-  if(id==="workshop"&&value==="Ada"){addTriggeredImpacts(["usedoil","battery","storage"]);addWasteCodes(["b105d","b110d","a102d"]);}
-  if(id==="workshop"&&value==="Tidak ada"){removeImpacts(["usedoil","battery"]);removeWasteCodes(["b105d","b110d","a102d"]);}
-  if(id==="irrigation"){if(value==="Air permukaan")addTriggeredImpacts(["surface"]);if(value==="Air tanah")addTriggeredImpacts(["groundwater"]);if(value==="Pemasok/PDAM")addTriggeredImpacts(["municipal"]);}
-  if(id==="peatUse"&&value==="Ya")addTriggeredImpacts(["peat"]);
-  if(id==="fieldType"&&value.includes("Offshore"))addTriggeredImpacts(["coastal","seawater","dredging"]);
-  if(id==="wetProcess"&&value==="Ya")addTriggeredImpacts(["process"]);
-  if(id==="wetProcess"&&value==="Tidak")removeImpacts(["process"]);
-  if(id==="thermalProcess"&&value==="Ada")addTriggeredImpacts(["boiler","vent"]);
-  if(id==="thermalProcess"&&value==="Tidak ada")removeImpacts(["boiler","vent"]);
-  if(id==="dewatering"&&value==="Ada")addTriggeredImpacts(["process","surface"]);
-  if(id==="batching"&&value==="Ada")addTriggeredImpacts(["process","dust"]);
-  if(id==="workshop"&&value==="Ada")addTriggeredImpacts(["oily"]);
-  if(id==="marine"&&value==="Ada")addTriggeredImpacts(["coastal","seawater","dredging"]);
-  if(id==="lab"&&value==="Ada")addTriggeredImpacts(["laboratory","chemical"]);
-  if(id==="medicalTreatment"&&value==="Insinerator")addTriggeredImpacts(["incinerator"]);
-  if(id==="feed"&&value.includes("Digunakan")){addTriggeredImpacts(["chemical","packaging",...(value.includes("disimpan")?["storage"]:[])]);addWasteCodes(["b104d"]);}
-  if(id==="slaughter"&&value==="Ada")addTriggeredImpacts(["process","organic","odor"]);
-  if(id==="laundry"&&value==="Ada")addTriggeredImpacts(["process","chemical"]);
-  if(id==="kitchen"&&value==="Ada")addTriggeredImpacts(["oily","organic","odor"]);
-  if(id==="genset"&&value==="Ada"){addTriggeredImpacts(["genset","usedoil","battery"]);addWasteCodes(["b105d","b110d","a102d"]);}
-  if(id==="estateIpal"&&value==="Ada")addTriggeredImpacts(["domestic","process","sewage-sludge"]);
-  if(id==="cargo"&&(value==="B3/kimia"||value==="BBM/migas"))addTriggeredImpacts(["chemical","storage","spill","voc"]);
-  if(id==="facilityType"&&value==="Pengelolaan sampah")addTriggeredImpacts(["leachate","odor","residue"]);
+function activityTriggerKeys(label){
+  const text=String(label||"").toLowerCase(),keys=[...(ACTIVITY_TRIGGERS[label]||[])];
+  const add=(...items)=>items.forEach(item=>{if(!keys.includes(item))keys.push(item);});
+  if(/limbah|ipal|sludge|lumpur|residu|kotoran/.test(text))add("process","sludge","storage");
+  if(/limbah cair|pengelolaan limbah/.test(text))add("process","sludge","storage","chemical");
+  if(/klarifikasi|pemisahan minyak|separator/.test(text))add("oily","process","sludge");
+  if(/penyimpanan produk|pemuatan produk/.test(text))add("storage","spill","voc");
+  if(/boiler|pemanasan|termal|pembangkit|turbin|insiner|pembakaran/.test(text))add("boiler","vent");
+  if(/gudang|penyimpanan|pemuatan|pengisian bahan bakar|bahan bakar/.test(text))add("storage","spill");
+  if(/pestisida|pupuk|bahan kimia|farmasi|obat|tinta|perekat|bleaching|pemucatan/.test(text))add("chemical","packaging","storage");
+  if(/laundry|pencucian|sanitasi/.test(text))add("process","chemical");
+  if(/laboratorium|radiologi/.test(text))add("laboratory","chemical");
+  if(/air|intake|irigasi|drainase|sirkulasi|pembuangan|disinfeksi/.test(text))add("process","runoff","surface");
+  if(/land clearing|pematangan|pembersihan|akses|jalan|tanah|penyiapan lahan/.test(text))add("runoff","dust","land-clearing","erosion");
+  if(/pemanenan|pengangkutan|mobilisasi|kendaraan|bongkar muat|dermaga|kapal|terminal/.test(text))add("traffic","usedoil","spill");
+  if(/kandang|ternak|pakan|pemerahan|pemotongan/.test(text))add("organic","odor","process");
+  if(/tambak|keramba|pembenihan|pembesaran|pakan/.test(text))add("organic","process","surface","seawater");
+  if(/cold storage|pendingin|cooling/.test(text))add("cooling");
+  if(/e-waste|baterai|ups/.test(text))add("battery");
+  if(/pipa|pipeline|hydrotest/.test(text))add("hydrotest","spill");
+  return [...new Set(keys)];
 }
+function recomputeScreeningState(){
+  const impacts=new Set(),wastes=new Set(),impactSources={},wasteSources={};
+  const addImpact=(key,source)=>{if(!key)return;impacts.add(key);(impactSources[key]??=[]).push(source);};
+  const addWaste=(key,source)=>{if(!key)return;wastes.add(key);(wasteSources[key]??=[]).push(source);};
+  const items=Array.isArray(state.kblis)?state.kblis:[],primaryCode=String(items[0]?.code||"");
+  const activityMap={...(state.activitiesByKbli||{})};
+  if(primaryCode)activityMap[primaryCode]=Array.isArray(state.activities)?state.activities:[];
+  items.forEach(item=>{
+    const code=String(item?.code||""),profile=kbliActivityProfile(item),selected=Array.isArray(activityMap[code])?activityMap[code]:(code===primaryCode?state.activities:profile.activities.slice(0,3));
+    (profile.defaults||[]).forEach(key=>addImpact(key,`kbli:${code}`));
+    (profile.waste||[]).forEach(key=>addWaste(key,`kbli:${code}`));
+    selected.forEach(label=>{
+      activityTriggerKeys(label).forEach(key=>addImpact(key,`activity:${code}:${label}`));
+      const triggers=activityTriggerKeys(label);
+      if(triggers.includes("usedoil"))addWaste("b105d",`activity:${code}:${label}`),addWaste("b110d",`activity:${code}:${label}`);
+      if(triggers.some(key=>["chemical","packaging"].includes(key)))addWaste("b104d",`activity:${code}:${label}`);
+      if(triggers.includes("battery"))addWaste("a102d",`activity:${code}:${label}`);
+    });
+  });
+  const answer=state.answers||{};
+  if(String(answer.chemicalUse||"").includes("Digunakan")){addImpact("chemical","answer:chemicalUse");addImpact("packaging","answer:chemicalUse");if(String(answer.chemicalUse).includes("disimpan")){addImpact("storage","answer:chemicalUse");addImpact("spill","answer:chemicalUse");}addWaste("b104d","answer:chemicalUse");if([QUESTIONNAIRE_PROFILES.coconut,QUESTIONNAIRE_PROFILES.oilpalm,QUESTIONNAIRE_PROFILES.plantation].includes(activeProfile()))addWaste("pesticide-verify","answer:chemicalUse");}
+  if(answer.workshop==="Ada"){["usedoil","battery","storage"].forEach(key=>addImpact(key,"answer:workshop"));["b105d","b110d","a102d"].forEach(key=>addWaste(key,"answer:workshop"));}
+  if(answer.irrigation==="Air permukaan")addImpact("surface","answer:irrigation");
+  if(answer.irrigation==="Air tanah")addImpact("groundwater","answer:irrigation");
+  if(answer.irrigation==="Pemasok/PDAM")addImpact("municipal","answer:irrigation");
+  if(answer.peatUse==="Ya")addImpact("peat","answer:peatUse");
+  if(String(answer.fieldType||"").includes("Offshore"))["coastal","seawater","dredging"].forEach(key=>addImpact(key,"answer:fieldType"));
+  if(answer.wetProcess==="Ya")addImpact("process","answer:wetProcess");
+  if(answer.thermalProcess==="Ada")["boiler","vent"].forEach(key=>addImpact(key,"answer:thermalProcess"));
+  if(answer.dewatering==="Ada")["process","surface"].forEach(key=>addImpact(key,"answer:dewatering"));
+  if(answer.batching==="Ada")["process","dust"].forEach(key=>addImpact(key,"answer:batching"));
+  if(answer.marine==="Ada")["coastal","seawater","dredging"].forEach(key=>addImpact(key,"answer:marine"));
+  if(answer.lab==="Ada")["laboratory","chemical"].forEach(key=>addImpact(key,"answer:lab"));
+  if(answer.medicalTreatment==="Insinerator")addImpact("incinerator","answer:medicalTreatment");
+  if(String(answer.feed||"").includes("Digunakan")){["chemical","packaging"].forEach(key=>addImpact(key,"answer:feed"));if(String(answer.feed).includes("disimpan"))addImpact("storage","answer:feed");addWaste("b104d","answer:feed");}
+  if(answer.slaughter==="Ada")["process","organic","odor"].forEach(key=>addImpact(key,"answer:slaughter"));
+  if(answer.laundry==="Ada")["process","chemical"].forEach(key=>addImpact(key,"answer:laundry"));
+  if(answer.kitchen==="Ada")["oily","organic","odor"].forEach(key=>addImpact(key,"answer:kitchen"));
+  if(answer.genset==="Ada"){["genset","usedoil","battery"].forEach(key=>addImpact(key,"answer:genset"));["b105d","b110d","a102d"].forEach(key=>addWaste(key,"answer:genset"));}
+  if(answer.estateIpal==="Ada")["domestic","process","sewage-sludge"].forEach(key=>addImpact(key,"answer:estateIpal"));
+  if(answer.cargo==="B3/kimia"||answer.cargo==="BBM/migas")["chemical","storage","spill","voc"].forEach(key=>addImpact(key,"answer:cargo"));
+  if(answer.facilityType==="Pengelolaan sampah")["leachate","odor","residue"].forEach(key=>addImpact(key,"answer:facilityType"));
+  (state.masterB3Selected||[]).forEach(()=>["chemical","storage","packaging"].forEach(key=>addImpact(key,"master:B3")));
+  (state.masterLB3Selected||[]).forEach(code=>{["chemical","storage",...masterLb3ImpactKeys(code)].forEach(key=>addImpact(key,`master:LB3:${code}`));});
+  (state.impactManual||[]).forEach(key=>addImpact(key,"manual"));
+  (state.wasteManual||[]).forEach(key=>addWaste(key,"manual"));
+  const suppressedImpacts=new Set(state.impactSuppressed||[]),suppressedWaste=new Set(state.wasteSuppressed||[]);
+  state.impacts=[...impacts].filter(key=>!suppressedImpacts.has(key));
+  state.wasteCodes=[...wastes].filter(key=>!suppressedWaste.has(key));
+  state.impactSources=Object.fromEntries(Object.entries(impactSources).map(([key,sources])=>[key,[...new Set(sources)]]));
+  state.wasteSources=Object.fromEntries(Object.entries(wasteSources).map(([key,sources])=>[key,[...new Set(sources)]]));
+}
+function applyAnswerTriggers(){recomputeScreeningState();}
 function setKbli(data){
-  state.kblis=[data];const profile=profileForCode(data.code),specific=kbliActivityProfile(data);
-  state.activities=specific.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.impacts=[...specific.defaults];state.wasteCodes=[...new Set(specific.waste||[])];state.showAllImpacts=false;
-  state.projectName=data.title;state.manualKbliCode="";state.manualKbliTitle="";saveState();renderView();showToast(`KBLI ${data.code} disimpan. Periksa kembali pertanyaan, dampak, dan kandidat limbah.`);
+  state.kblis=[data];const profile=profileForCode(data.code),specific=kbliActivityProfile(data),selected=specific.activities.slice(0,3);
+  state.activities=selected;state.activitiesByKbli={[String(data.code)]:selected};state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.impacts=[];state.wasteCodes=[];state.impactManual=[];state.wasteManual=[];state.impactSuppressed=[];state.wasteSuppressed=[];state.impactSources={};state.wasteSources={};state.masterB3Selected=[];state.masterLB3Selected=[];state.showAllImpacts=false;state.projectName=data.title;state.manualKbliCode="";state.manualKbliTitle="";recomputeScreeningState();saveState();renderView();showToast(`KBLI ${data.code} disimpan. Periksa kembali pertanyaan, dampak, dan kandidat limbah.`);
 }
 function addKbli(data){
-  const code=String(data?.code||"");
-  if(!/^\d{5}$/.test(code))return showToast("Pilih kode KBLI final 5 digit.");
-  if(state.kblis.some(k=>k.code===code))return showToast(`KBLI ${code} sudah ada di proyek ini.`);
-  if(!state.kblis.length){setKbli({...data,code});return;}
-  const item={...data,code},profile=kbliActivityProfile(item);
-  state.kblis.push(item);markNeedsRescreen("KBLI pendukung berubah");
-  addTriggeredImpacts(profile.defaults);addWasteCodes(profile.waste||[]);
-  saveState();renderView();showToast(`KBLI ${code} ditambahkan sebagai KBLI pendukung.`);
+  const code=String(data?.code||"");if(!/^\d{5}$/.test(code))return showToast("Pilih kode KBLI final 5 digit.");if(state.kblis.some(k=>k.code===code))return showToast(`KBLI ${code} sudah ada di proyek ini.`);if(!state.kblis.length){setKbli({...data,code});return;}
+  const item={...data,code},profile=kbliActivityProfile(item);state.kblis.push(item);state.activitiesByKbli={...(state.activitiesByKbli||{}),[code]:profile.activities.slice(0,3)};recomputeScreeningState();markNeedsRescreen("KBLI pendukung berubah");saveState();renderView();showToast(`KBLI ${code} ditambahkan sebagai KBLI pendukung. Periksa proses dan dampak gabungannya.`);
 }
 function makePrimaryKbli(code){
-  const index=state.kblis.findIndex(k=>k.code===code);if(index<1)return;
-  const [item]=state.kblis.splice(index,1);state.kblis.unshift(item);markNeedsRescreen("Urutan KBLI utama berubah");
-  const profile=kbliActivityProfile(item);
-  state.activities=profile.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.showAllImpacts=false;state.showAllWaste=false;addTriggeredImpacts(profile.defaults);addWasteCodes(profile.waste||[]);state.projectName=item.title;
-  saveState();renderView();showToast(`KBLI ${code} sekarang menjadi KBLI utama. Periksa kembali kapasitas dan pertanyaan.`);
+  const index=state.kblis.findIndex(k=>k.code===code);if(index<1)return;const [item]=state.kblis.splice(index,1);state.kblis.unshift(item);const profile=kbliActivityProfile(item),selected=(state.activitiesByKbli||{})[String(code)]||profile.activities.slice(0,3);state.activities=[...selected];state.activitiesByKbli={...(state.activitiesByKbli||{}),[String(code)]:[...selected]};state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.impactSuppressed=[];state.wasteSuppressed=[];state.projectName=item.title;recomputeScreeningState();markNeedsRescreen("Urutan KBLI utama berubah");saveState();renderView();showToast(`KBLI ${code} sekarang menjadi KBLI utama. Periksa kembali kapasitas, proses, dan pertanyaan.`);
 }
 function removeKbli(code){
-  const index=state.kblis.findIndex(k=>k.code===code);if(index<0)return;
-  const wasPrimary=index===0;state.kblis.splice(index,1);markNeedsRescreen("KBLI dihapus");
-  if(wasPrimary&&state.kblis.length){
-    const next=state.kblis[0],profile=kbliActivityProfile(next);
-    state.activities=profile.activities.slice(0,3);state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.projectName=next.title;addTriggeredImpacts(profile.defaults);addWasteCodes(profile.waste||[]);
-  }else if(!state.kblis.length){state.activities=[];state.capacity="";state.answers={};state.impacts=[];state.wasteCodes=[];}
-  saveState();renderView();showToast(state.kblis.length?`KBLI ${code} dihapus dari proyek.`:"Semua KBLI telah dihapus.");
+  const index=state.kblis.findIndex(k=>k.code===code);if(index<0)return;const wasPrimary=index===0;state.kblis.splice(index,1);const nextMap={...(state.activitiesByKbli||{})};delete nextMap[String(code)];state.activitiesByKbli=nextMap;
+  if(wasPrimary&&state.kblis.length){const next=state.kblis[0],profile=kbliActivityProfile(next),selected=nextMap[String(next.code)]||profile.activities.slice(0,3);state.activities=[...selected];state.activitiesByKbli={...nextMap,[String(next.code)]:[...selected]};state.capacity="";state.capacityUnit=profile.units[0];state.answers={};state.projectName=next.title;state.impactSuppressed=[];state.wasteSuppressed=[];}
+  else if(!state.kblis.length){state.activities=[];state.activitiesByKbli={};state.capacity="";state.answers={};state.impacts=[];state.wasteCodes=[];state.impactSources={};state.wasteSources={};}
+  recomputeScreeningState();markNeedsRescreen("KBLI dihapus");saveState();renderView();showToast(state.kblis.length?`KBLI ${code} dihapus dari proyek.`:"Semua KBLI telah dihapus.");
 }
 function updateComplianceField(el){const key=el.dataset.complianceField;if(!key)return;state.complianceReview={...DEFAULT_COMPLIANCE_REVIEW,...(state.complianceReview||{}),[key]:el.value};saveState();renderView();}
 function updateField(el){
@@ -1693,13 +1737,13 @@ document.addEventListener("change",e=>{
   }
   if(e.target.matches("select[data-field='docProject']")){state.docProject=e.target.value;state.docFilter="Semua";state.docSearch="";saveState();renderView();return;}
   if(e.target.matches("select[data-master-kind]")){state.masterB3Kind=e.target.value;state.masterB3Search="";saveState();renderView();return;}
-  if(e.target.matches("input[data-master-b3-id]")){const id=String(e.target.dataset.masterB3Id),selected=new Set((state.masterB3Selected||[]).map(String));if(e.target.checked)selected.add(id);else selected.delete(id);state.masterB3Selected=[...selected];if(e.target.checked)addTriggeredImpacts(["chemical","storage","packaging"]);markNeedsRescreen(`Bahan B3 master ${id} berubah`);saveState();renderView();return;}
-  if(e.target.matches("input[data-master-lb3-code]")){const code=String(e.target.dataset.masterLb3Code),selected=new Set((state.masterLB3Selected||[]).map(String));if(e.target.checked)selected.add(code);else selected.delete(code);state.masterLB3Selected=[...selected];if(e.target.checked)addTriggeredImpacts(["chemical","storage",...masterLb3ImpactKeys(code)]);markNeedsRescreen(`Kandidat LB3 master ${code} berubah`);saveState();renderView();return;}
+  if(e.target.matches("input[data-master-b3-id]")){const id=String(e.target.dataset.masterB3Id),selected=new Set((state.masterB3Selected||[]).map(String));if(e.target.checked)selected.add(id);else selected.delete(id);state.masterB3Selected=[...selected];recomputeScreeningState();markNeedsRescreen(`Bahan B3 master ${id} berubah`);saveState();renderView();return;}
+  if(e.target.matches("input[data-master-lb3-code]")){const code=String(e.target.dataset.masterLb3Code),selected=new Set((state.masterLB3Selected||[]).map(String));if(e.target.checked)selected.add(code);else selected.delete(code);state.masterLB3Selected=[...selected];recomputeScreeningState();markNeedsRescreen(`Kandidat LB3 master ${code} berubah`);saveState();renderView();return;}
   if(e.target.matches("select[data-compliance-field],input[data-compliance-field]")){updateComplianceField(e.target);return;}
   if(e.target.matches("select[data-field]"))updateField(e.target);
   if(e.target.matches("select[data-answer]")){const id=e.target.dataset.answer;state.answers[id]=e.target.value;applyAnswerTriggers(id,e.target.value);markNeedsRescreen(`Jawaban profil ${id} berubah`);saveState();renderView();}
-  if(e.target.matches("[data-impact]")){const k=e.target.dataset.impact;state.impacts=e.target.checked?[...new Set([...state.impacts,k])]:state.impacts.filter(x=>x!==k);markNeedsRescreen("Sumber dampak berubah");saveState();renderView();}
-  if(e.target.matches("[data-waste]")){const k=e.target.dataset.waste;state.wasteCodes=e.target.checked?[...new Set([...state.wasteCodes,k])]:state.wasteCodes.filter(x=>x!==k);addTriggeredImpacts(e.target.checked?["storage"]:[]);markNeedsRescreen("Kandidat B3/Limbah B3 berubah");saveState();renderView();}
+  if(e.target.matches("[data-impact]")){const k=e.target.dataset.impact,stateManual=new Set(state.impactManual||[]),suppressed=new Set(state.impactSuppressed||[]);if(e.target.checked){stateManual.add(k);suppressed.delete(k);}else{stateManual.delete(k);suppressed.add(k);}state.impactManual=[...stateManual];state.impactSuppressed=[...suppressed];recomputeScreeningState();markNeedsRescreen("Sumber dampak berubah");saveState();renderView();}
+  if(e.target.matches("[data-waste]")){const k=e.target.dataset.waste,stateManual=new Set(state.wasteManual||[]),suppressed=new Set(state.wasteSuppressed||[]);if(e.target.checked){stateManual.add(k);suppressed.delete(k);}else{stateManual.delete(k);suppressed.add(k);}state.wasteManual=[...stateManual];state.wasteSuppressed=[...suppressed];recomputeScreeningState();markNeedsRescreen("Kandidat B3/Limbah B3 berubah");saveState();renderView();}
   if(e.target.matches("[data-location]")){const k=e.target.dataset.location;state.locationFlags=e.target.checked?[...new Set([...state.locationFlags,k])]:state.locationFlags.filter(x=>x!==k);markNeedsRescreen("Sensitivitas lokasi berubah");saveState();renderView();}
 });
 document.addEventListener("submit",e=>{
@@ -1728,7 +1772,7 @@ document.addEventListener("click",e=>{
   const amdalCheck=e.target.closest("[data-amdal-check]");if(amdalCheck){if(amdalCheck.dataset.amdalCheck==="true"){state.amdalStudy={...(state.amdalStudy||{}),knowledgeChecked:true};saveState();renderView();showToast("Tepat. Kesiapan peran adalah checkpoint proses.");}else showToast("Coba lagi. Fokus pada kesiapan peran dan tanggung jawab.");return;}
   const step=e.target.closest("[data-step]");if(step){state.view="screening";state.step=+step.dataset.step;renderView();scrollWorkspaceTop();return;}
   const result=e.target.closest("[data-kbli-code]");if(result){addKbli({id:result.dataset.kbliId,code:result.dataset.kbliCode,title:result.dataset.kbliTitle,description:result.dataset.kbliDescription});return;}
-  const activity=e.target.closest("[data-activity]");if(activity){const k=activity.dataset.activity,adding=!state.activities.includes(k);state.activities=adding?[...state.activities,k]:state.activities.filter(x=>x!==k);markNeedsRescreen("Tahapan/aktivitas proyek berubah");if(adding){const triggers=ACTIVITY_TRIGGERS[k]||[];addTriggeredImpacts(triggers);if(triggers.includes("usedoil"))addWasteCodes(["b105d","b110d"]);if(triggers.includes("chemical")||triggers.includes("packaging"))addWasteCodes(["b104d"]);if(triggers.includes("battery"))addWasteCodes(["a102d","b107d"]);}saveState();renderView();return;}
+  const activity=e.target.closest("[data-activity]");if(activity){const k=activity.dataset.activity,adding=!state.activities.includes(k);state.activities=adding?[...state.activities,k]:state.activities.filter(x=>x!==k);const primaryCode=String(state.kblis[0]?.code||"");state.activitiesByKbli={...(state.activitiesByKbli||{}),...(primaryCode?{[primaryCode]:[...state.activities]}:{})};recomputeScreeningState();markNeedsRescreen("Tahapan/aktivitas proyek berubah");saveState();renderView();return;}
   const task=e.target.closest("[data-task]");if(task&&!e.target.closest("a")){state.openTask=state.openTask===task.dataset.task?null:task.dataset.task;renderView();return;}
   const tf=e.target.closest("[data-task-filter]");if(tf){state.taskFilter=tf.dataset.taskFilter;renderView();return;}
   const rf=e.target.closest("[data-reg-filter]");if(rf){state.regFilter=rf.dataset.regFilter;renderView();return;}
