@@ -870,7 +870,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   --radius-sm:4px;
   --radius-md:8px;
 }
-html{background:var(--paper);scroll-behavior:smooth}.skip-link{position:fixed;left:14px;top:10px;z-index:50;transform:translateY(-160%);background:var(--dark);color:#fff;padding:9px 12px;border-radius:4px;font-size:12px;text-decoration:none}.skip-link:focus{transform:translateY(0)}
+html{background:var(--paper);scroll-behavior:smooth}.skip-link{position:fixed;left:14px;top:10px;z-index:50;transform:translateY(-160%);opacity:0;pointer-events:none;background:var(--dark);color:#fff;padding:9px 12px;border-radius:4px;font-size:12px;text-decoration:none;transition:transform .18s ease,opacity .18s ease}.skip-link:focus{transform:translateY(0);opacity:1;pointer-events:auto}
 body{background:var(--paper);color:var(--ink);font-family:"Satoshi",ui-sans-serif,system-ui,sans-serif;font-size:15px;line-height:1.5}
 body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.18;background-image:radial-gradient(rgba(23,59,49,.16) .45px,transparent .45px);background-size:5px 5px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.32),transparent 58%)}
 button,input,select,textarea{font-family:inherit}
