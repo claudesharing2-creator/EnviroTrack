@@ -926,6 +926,43 @@ function createNewProjectState(){
 let entryGateTrigger=null;
 let entryCloseTimer=null;
 let siteMap=null;
+let leafletLoadPromise=null;
+let screeningCatalogPromise=null;
+const APP_ASSET_VERSION="20260825-43";
+function loadScriptOnce(src,ready,attributes={}){
+  if(typeof ready==="function"&&ready())return Promise.resolve();
+  const existing=[...document.scripts].find(script=>script.src===src||script.src.split("?")[0]===src.split("?")[0]);
+  if(existing){return new Promise((resolve,reject)=>{if(typeof ready==="function"&&ready())return resolve();existing.addEventListener("load",()=>resolve(),{once:true});existing.addEventListener("error",()=>reject(new Error(`Gagal memuat ${src}`)),{once:true});});}
+  return new Promise((resolve,reject)=>{const script=document.createElement("script");script.src=src;script.defer=true;Object.entries(attributes).forEach(([key,value])=>script.setAttribute(key,value));script.onload=()=>resolve();script.onerror=()=>reject(new Error(`Gagal memuat ${src}`));document.head.appendChild(script);});
+}
+function loadStylesheetOnce(href,attributes={}){
+  const existing=[...document.querySelectorAll('link[rel="stylesheet"]')].find(link=>link.href===href||link.href.split("?")[0]===href.split("?")[0]);
+  if(existing)return Promise.resolve();
+  return new Promise((resolve,reject)=>{const link=document.createElement("link");link.rel="stylesheet";link.href=href;Object.entries(attributes).forEach(([key,value])=>link.setAttribute(key,value));link.onload=()=>resolve();link.onerror=()=>reject(new Error(`Gagal memuat ${href}`));document.head.appendChild(link);});
+}
+function ensureLeafletLoaded(){
+  if(leafletLoadPromise)return leafletLoadPromise;
+  leafletLoadPromise=Promise.all([
+    loadStylesheetOnce("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",{integrity:"sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=",crossorigin:"anonymous"}),
+    loadScriptOnce("https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",()=>!!window.L,{integrity:"sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=",crossorigin:"anonymous"})
+  ]).then(()=>{if(!window.L)throw new Error("Leaflet tidak tersedia");return window.L;}).catch(error=>{leafletLoadPromise=null;throw error;});
+  return leafletLoadPromise;
+}
+function screeningCatalogsReady(){return !!(window.ENVIRO_KBLI_2025&&window.ENVIRO_B3_LB3_MASTER);}
+function ensureScreeningCatalogs(){
+  if(screeningCatalogsReady())return Promise.resolve();
+  if(screeningCatalogPromise)return screeningCatalogPromise;
+  screeningCatalogPromise=Promise.all([
+    loadScriptOnce(`assets/kbli-2025-catalog.js?v=${APP_ASSET_VERSION}`,()=>!!window.ENVIRO_KBLI_2025),
+    loadScriptOnce(`assets/b3-lb3-master-2026.js?v=${APP_ASSET_VERSION}`,()=>!!window.ENVIRO_B3_LB3_MASTER)
+  ]).then(()=>{if(!screeningCatalogsReady())throw new Error("Katalog lokal belum tersedia");return true;}).catch(error=>{screeningCatalogPromise=null;throw error;});
+  return screeningCatalogPromise;
+}
+function renderScreeningCatalogLoading(){
+  const screen=document.getElementById("screen");if(!screen)return;
+  screen.innerHTML=heading(1,"Menyiapkan katalog lokal","Katalog KBLI 2025 dan master B3/LB3 sedang dimuat dari asset lokal. Tidak ada request OSS otomatis.")+`<div class="empty-note loading-note"><b>Menyiapkan data Penapisan…</b><p>Setelah siap, pencarian dan pilihan proses akan tersedia.</p><span class="spinner" aria-label="Memuat katalog lokal"></span></div>`;
+  const next=document.getElementById("next");if(next)next.disabled=true;
+}
 function storedWorkspace(){const saved=readStoredState();return saved&&typeof saved==="object"&&Object.keys(saved).length?saved:null;}
 function openEntryGate(trigger){const gate=document.getElementById("entry-gate");if(!gate)return;clearTimeout(entryCloseTimer);entryGateTrigger=trigger||document.activeElement;const saved=storedWorkspace(),resume=document.getElementById("entry-resume"),note=document.getElementById("entry-resume-note");if(resume){resume.hidden=!saved;if(saved)note.textContent=`${saved.projectName||"Workspace terakhir"} · langkah ${Math.min(5,Number(saved.step||0)+1)} dari 5`;}gate.hidden=false;gate.classList.remove("is-closing");gate.classList.remove("is-open");gate.setAttribute("aria-hidden","false");document.body.classList.add("entry-gate-open");requestAnimationFrame(()=>{gate.classList.add("is-open");gate.querySelector(".entry-option:not([hidden]),.entry-close")?.focus();});}
 function closeEntryGate(restoreFocus=true){const gate=document.getElementById("entry-gate");if(!gate||gate.hidden)return;clearTimeout(entryCloseTimer);gate.classList.remove("is-open");gate.classList.add("is-closing");const finish=()=>{gate.hidden=true;gate.classList.remove("is-closing");gate.setAttribute("aria-hidden","true");document.body.classList.remove("entry-gate-open");if(restoreFocus&&entryGateTrigger?.focus)entryGateTrigger.focus();entryGateTrigger=null;};if(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)finish();else entryCloseTimer=setTimeout(finish,240);}
@@ -1144,8 +1181,10 @@ function officialLayerCatalogMarkup(){
   const open=state.mapCatalogOpen===true,readyLayers=window.ENVIRO_OFFICIAL_MAP_LAYERS.filter(layer=>layer.endpoint&&layer.layerName),filteredLayers=window.ENVIRO_OFFICIAL_MAP_LAYERS.filter(mapCatalogMatches),readyCount=readyLayers.length,allReadyVisible=readyLayers.length>0&&readyLayers.every(layer=>mapLayerPreference(layer.id).visible===true);
   return `<section class="official-layer-catalog ${open?"is-open":"is-closed"}"><div class="official-layer-head"><div><span class="kicker">KATALOG LAYER RESMI</span><h3>Overlay tata ruang, kawasan sensitif & administrasi</h3><p>Layer hanya aktif setelah endpoint layanan, nama layer, sumber, dan metadata dikonfirmasi dari walidata resmi.</p></div><div class="official-layer-head-actions"><span class="catalog-status">${readyCount}/${window.ENVIRO_OFFICIAL_MAP_LAYERS.length} siap</span><button type="button" class="catalog-preset" data-action="enable-verified-layers" ${allReadyVisible?"aria-pressed=\"true\"":"aria-pressed=\"false\""}>${allReadyVisible?"Semua terverifikasi aktif":"Aktifkan semua terverifikasi"}</button><button type="button" class="catalog-toggle" data-action="toggle-map-catalog" aria-expanded="${open}" aria-controls="official-layer-panel">${open?"Sembunyikan katalog":"Tampilkan katalog"}</button></div></div><div class="official-layer-panel" id="official-layer-panel" ${open?"":"hidden"}><div class="official-layer-filters"><label>Kategori<select data-map-filter="mapCatalogScope" aria-label="Filter kategori layer"><option value="all" ${state.mapCatalogScope==="all"?"selected":""}>Semua kategori</option><option value="Tata ruang" ${state.mapCatalogScope==="Tata ruang"?"selected":""}>Tata ruang</option><option value="Kawasan sensitif" ${state.mapCatalogScope==="Kawasan sensitif"?"selected":""}>Kawasan sensitif</option><option value="Administrasi" ${state.mapCatalogScope==="Administrasi"?"selected":""}>Administrasi</option></select></label><label>Status<select data-map-filter="mapCatalogStatus" aria-label="Filter status layer"><option value="all" ${state.mapCatalogStatus==="all"?"selected":""}>Semua status</option><option value="ready" ${state.mapCatalogStatus==="ready"?"selected":""}>Confirmed</option><option value="pending" ${state.mapCatalogStatus==="pending"?"selected":""}>Pending</option></select></label><label>Cakupan<select data-map-filter="mapCatalogCoverage" aria-label="Filter cakupan layer"><option value="all" ${state.mapCatalogCoverage==="all"?"selected":""}>Semua cakupan</option><option value="IKN" ${state.mapCatalogCoverage==="IKN"?"selected":""}>IKN</option><option value="WP 5 IKN Timur 2" ${state.mapCatalogCoverage==="WP 5 IKN Timur 2"?"selected":""}>WP 5 IKN Timur 2</option><option value="Indonesia" ${state.mapCatalogCoverage==="Indonesia"?"selected":""}>Indonesia</option><option value="Kalimantan Timur" ${state.mapCatalogCoverage==="Kalimantan Timur"?"selected":""}>Kalimantan Timur</option><option value="Perlu konfirmasi" ${state.mapCatalogCoverage==="Perlu konfirmasi"?"selected":""}>Perlu konfirmasi</option></select></label><span class="catalog-filter-count">${filteredLayers.length} layer ditampilkan</span></div>${filteredLayers.length?"":"<div class=\"empty-note catalog-empty\"><b>Tidak ada layer yang cocok</b><p>Ubah kategori, status, atau cakupan untuk melihat layer lain.</p></div>"}<div class="official-layer-list">${filteredLayers.map(layer=>{const ready=Boolean(layer.endpoint&&layer.layerName),pref=mapLayerPreference(layer.id),opacity=Math.round(Number(pref.opacity??.55)*100);return `<article class="official-layer-row ${ready?"is-ready":"is-pending"}"><div class="official-layer-copy"><b>${esc(layer.title)}</b><small>${esc(layer.scope)} · ${esc(layer.serviceType)} · ${esc(layer.publisher)}</small><span>${ready?`${esc(layer.serviceType)} aktif · ${esc([layer.coverage,layer.crs,layer.dataDate,layer.verifiedAt?`Dicek ${layer.verifiedAt}`:""].filter(Boolean).join(" · "))}`:`Belum dikonfigurasi — tidak ada request WMS yang dikirim.`}</span><a href="${esc(layer.officialUrl)}" target="_blank" rel="noopener noreferrer">Buka portal sumber ↗</a></div><div class="official-layer-controls">${ready?`<label class="layer-toggle"><input type="checkbox" data-wms-toggle="${esc(layer.id)}" ${pref.visible??layer.defaultVisible?"checked":""}> tampil</label><label class="layer-opacity">opacity <output data-wms-value="${esc(layer.id)}">${opacity}%</output><input type="range" min="10" max="90" step="5" value="${opacity}" data-wms-opacity="${esc(layer.id)}"></label>`:`<span class="layer-status-pending">ENDPOINT BELUM DIKONFIRMASI</span>`}</div></article>`;}).join("")}</div><section class="official-source-pathways" aria-labelledby="official-source-title"><div class="official-source-head"><div><small class="kicker">JALUR VERIFIKASI RESMI</small><h4 id="official-source-title">Belum ada endpoint? Mulai dari pemilik data.</h4><p>Gunakan portal resmi untuk mencari metadata atau salin template permintaan kepada walidata/PPID. Tindakan ini tidak mengirim data dan tidak mengaktifkan layer pending.</p></div><span class="source-count">${GIS_SOURCE_PATHWAYS.length} jalur</span></div><div class="official-source-grid">${GIS_SOURCE_PATHWAYS.map(source=>`<article class="official-source-card"><div><b>${esc(source.name)}</b><small>${esc(source.purpose)}</small></div><a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">Buka sumber ↗</a><button type="button" class="soft compact" data-action="copy-gis-request" data-source="${esc(source.id)}">Salin template permintaan</button></article>`).join("")}</div></section><p class="official-layer-note">Jangan memasukkan endpoint hasil scraping atau endpoint tanpa izin. Setiap layer harus memiliki dasar hukum, CRS, tanggal data, penerbit, lisensi, dan tanggal terakhir dicek.</p></div></section>`;
 }
-function initSiteMap(){
+async function initSiteMap(){
   const mapElement=document.getElementById("site-map");if(!mapElement)return;
+  try{await ensureLeafletLoaded();}catch{mapElement.innerHTML='<div class="empty-note"><b>Peta belum dapat dimuat</b><p>Leaflet gagal dimuat. Data polygon lokal tetap tersimpan dan dapat diperiksa tanpa peta.</p></div>';showToast("Library peta belum dapat dimuat. Polygon lokal tetap aman.");return;}
+  if(!document.getElementById("site-map")||state.view!=="screening"||state.step!==2)return;
   if(siteMap){siteMap.remove();siteMap=null;}
   if(!window.L){const status=document.getElementById("site-map-status");if(status)status.textContent="Peta belum termuat. Polygon tetap tersimpan lokal dan dapat diekspor.";return;}
   const points=(state.polygon?.points||[]).map(([lng,lat])=>[lat,lng]).filter(pair=>pair.every(Number.isFinite));
@@ -1498,7 +1537,7 @@ function renderAmdalStudy(){
     ["Lokasi",state.regency?`${state.regency}, ${state.province}`:"Belum dipilih"],
     ["Sumber dampak",state.impacts?.length?`${state.impacts.length} dipetakan`:"Belum dipetakan"]
   ];
-  const phaseRail=AMDAL_STUDY_PHASES.map((item,index)=>`<button type="button" class="amdal-phase ${index===study.activePhase?"active":""} ${index<study.activePhase?"done":""}" data-amdal-phase="${index}"><span>${index<study.activePhase?"✓":item.n}</span><div><b>${item.name}</b><small>${item.anchor}</small></div></button>`).join("");
+  const phaseRail=AMDAL_STUDY_PHASES.map((item,index)=>`<button type="button" class="amdal-phase ${index===study.activePhase?"active":""} ${index<study.activePhase?"done":""}" data-amdal-phase="${index}" aria-current="${index===study.activePhase?"step":"false"}"><span>${index<study.activePhase?"✓":item.n}</span><div><b>${item.name}</b><small>${item.anchor}</small></div></button>`).join("");
   const projectRows=contextItems.map(([label,value])=>`<div><span>${esc(label)}</span><b>${esc(value)}</b></div>`).join("");
   return `<div class="view-shell amdal-study-shell">
     ${viewHeader("Studio AMDAL","Latihan proses dengan data proyek EnviroTrack yang tersimpan lokal. Ini bukan salinan atau pengganti layanan AMDALNet.",`<span class="amdal-mode-label">MODE LATIHAN · LOKAL</span>`)}
@@ -1570,9 +1609,15 @@ function renderView(){
   document.getElementById("page-title").textContent=titles[state.view];
   document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===state.view&&b.closest(".nav")));
   const content=document.getElementById("content");
-  if(screening){content.innerHTML=`<section class="panel"><div class="screen" id="screen" role="region" aria-label="Langkah Penapisan"></div><footer class="panel-footer" id="panel-footer"><button type="button" class="back" id="back">← Kembali</button><span class="note">Hasil menyesuaikan data yang kamu masukkan</span><button type="button" class="next" id="next">Lanjutkan <span>→</span></button></footer></section><aside class="context" id="context" aria-label="Ringkasan proyek"></aside>`;renderScreening();}
+  if(screening){content.innerHTML=`<section class="panel"><div class="screen" id="screen" role="region" aria-label="Langkah Penapisan"></div><footer class="panel-footer" id="panel-footer"><button type="button" class="back" id="back">← Kembali</button><span class="note">Hasil menyesuaikan data yang kamu masukkan</span><button type="button" class="next" id="next">Lanjutkan <span>→</span></button></footer></section><aside class="context" id="context" aria-label="Ringkasan proyek"></aside>`;
+    if(!screeningCatalogsReady()){
+      renderScreeningCatalogLoading();
+      ensureScreeningCatalogs().then(()=>{if(state.view==="screening")renderView();}).catch(()=>{const screen=document.getElementById("screen");if(screen)screen.innerHTML=heading(1,"Katalog lokal belum siap","Coba buka kembali Penapisan setelah asset lokal selesai dimuat.")+`<div class="empty-note"><b>Pemuatan katalog gagal</b><p>Fitur lain tetap lokal. Refresh halaman untuk mencoba lagi.</p><button type="button" class="soft" data-action="retry-screening-catalog">Coba lagi</button></div>`;});
+    }else renderScreening();
+  }
   else{content.className="content full";content.innerHTML={home:renderHome,"amdal-study":renderAmdalStudy,projects:renderProjects,tasks:renderAllTasks,documents:renderDocuments,calendar:renderCalendar,regulations:renderRegulations}[state.view]();}
   content.classList.remove("page-enter-active","page-enter","view-transition-in");if(shouldTransition){void content.offsetWidth;content.classList.add("view-transition-in");}initMotion();
+  if(screening&&!screeningCatalogsReady())return;
   document.getElementById("task-count").textContent=buildTasks().length;
   history.replaceState(null,"",`#${{home:"beranda",screening:"penapisan","amdal-study":"studio-amdal",projects:"proyek",tasks:"tugas",documents:"dokumen",calendar:"kalender",regulations:"regulasi"}[state.view]}`);
   saveState();
@@ -1707,6 +1752,7 @@ document.addEventListener("input",e=>{
   if(e.target.id==="manual-title"){state.manualKbliTitle=e.target.value;saveState();}
   if(e.target.id==="reg-search"){state.regSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
   if(e.target.id==="doc-search"){state.docSearch=e.target.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>renderView(),250);}
+  if(e.target.matches("[data-action='retry-screening-catalog']")){screeningCatalogPromise=null;renderView();return;}
   if(e.target.matches("[data-wms-toggle]")){const id=e.target.dataset.wmsToggle,checked=e.target.checked,statePref=state.mapLayerPreferences?.[id]||{};state.mapLayerPreferences={...(state.mapLayerPreferences||{}),[id]:{...statePref,visible:checked}};if(checked)siteMap?._enviroOfficialLayers?.[id]?.addTo(siteMap);else if(siteMap?._enviroOfficialLayers?.[id])siteMap.removeLayer(siteMap._enviroOfficialLayers[id]);saveState();return;}
   if(e.target.matches("[data-master-search]")){state.masterB3Search=e.target.value;saveState();renderView();return;}
   if(e.target.matches("[data-field][type='text'],[data-field]:not(select)")){state[e.target.dataset.field]=e.target.value;if(["capacity","capacityUnit","projectStatus","stage"].includes(e.target.dataset.field))markNeedsRescreen(`${e.target.dataset.field} proyek berubah`);saveState();}
